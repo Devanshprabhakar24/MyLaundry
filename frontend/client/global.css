@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * MyLaundry brand colors and theme
+   * Using fresh, clean colors with professional blue accent
+   */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 13% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+
+    /* MyLaundry primary blue (#007BFF) */
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light blue background (#EBF5FF) */
+    --secondary: 211 100% 96%;
+    --secondary-foreground: 220 13% 18%;
+
+    --muted: 211 100% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 211 100% 96%;
+    --accent-foreground: 220 13% 18%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 211 100% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 220 13% 18%;
+    --foreground: 0 0% 100%;
+
+    --card: 220 13% 18%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 220 13% 18%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 13% 25%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 220 13% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 25%;
+    --input: 220 13% 25%;
+    --ring: 211 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-laundry-dark;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-laundry-blue text-white hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-laundry-light-blue text-laundry-blue hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition-colors border border-laundry-blue;
+  }
+}
