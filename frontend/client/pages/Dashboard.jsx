@@ -356,7 +356,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-laundry-gray">Money Saved:</span>
-                  <span className="font-medium text-green-600">$15.50</span>
+                  <span className="font-medium text-green-600">₹500+</span>
                 </div>
               </CardContent>
             </Card>

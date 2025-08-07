@@ -57,7 +57,7 @@ export default function NewOrder() {
       name: "Wash & Fold",
       description: "Professional washing, drying, and folding",
       icon: <Package className="h-6 w-6" />,
-      price: 2.50,
+      price: 70,
       unit: "per kg",
       minWeight: 3
     },
@@ -67,11 +67,11 @@ export default function NewOrder() {
       description: "Expert care for delicate garments",
       icon: <Shirt className="h-6 w-6" />,
       items: [
-        { name: "Shirt", price: 8.99 },
-        { name: "Trousers", price: 12.99 },
-        { name: "Dress", price: 18.99 },
-        { name: "Suit", price: 24.99 },
-        { name: "Coat", price: 29.99 }
+        { name: "Shirt", price: 15 },
+        { name: "Trousers", price: 30 },
+        { name: "Dress", price: 100 },
+        { name: "Suit", price: 200 },
+        { name: "Coat", price: 250 }
       ]
     },
     {
@@ -80,9 +80,9 @@ export default function NewOrder() {
       description: "Professional pressing and finishing",
       icon: <Sparkles className="h-6 w-6" />,
       items: [
-        { name: "Shirt", price: 3.99 },
-        { name: "Trousers", price: 4.99 },
-        { name: "Dress", price: 6.99 }
+        { name: "Shirt", price: 10 },
+        { name: "Trousers", price: 15 },
+        { name: "Dress", price: 30 }
       ]
     }
   ];
@@ -133,7 +133,7 @@ export default function NewOrder() {
     let total = 0;
     
     if (orderData.services.washFold.selected) {
-      total += orderData.services.washFold.weight * 2.50;
+      total += orderData.services.washFold.weight * 700;
     }
     
     if (orderData.services.dryClean.selected) {
@@ -173,7 +173,7 @@ export default function NewOrder() {
       address: orderData.pickupAddress,
       estimatedDelivery: new Date(new Date(orderData.pickupDate).getTime() + 24 * 60 * 60 * 1000), // Set estimated delivery to 24 hours after pickup
       specialInstructions: orderData.specialInstructions,
-      total: calculateTotal() + (orderData.deliveryPreference === "express" ? 5 : 0),
+      total: calculateTotal() + (orderData.deliveryPreference === "express" ? 20 : 0),
       status: 'pickup_scheduled',
       items: Object.entries(orderData.services)
         .filter(([, service]) => service.selected)
@@ -277,7 +277,7 @@ export default function NewOrder() {
             {currentStep === 1 && (
               <div className="space-y-8">
                 {services.map((service) => (
-                  <Card key={service.id} className={`border-2 ${
+                  <Card key={service.id} className={`border-2 ₹{
                     orderData.services[service.id]?.selected 
                       ? 'border-laundry-blue bg-laundry-light-blue' 
                       : 'border-gray-200'
@@ -320,7 +320,7 @@ export default function NewOrder() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          <Badge variant="secondary">${service.price} {service.unit}</Badge>
+                          <Badge variant="secondary">₹{service.price} {service.unit}</Badge>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -328,7 +328,7 @@ export default function NewOrder() {
                             <div key={item.name} className="flex items-center justify-between p-3 bg-white rounded border">
                               <div>
                                 <div className="font-medium">{item.name}</div>
-                                <div className="text-sm text-laundry-gray">${item.price}</div>
+                                <div className="text-sm text-laundry-gray">₹{item.price}</div>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Button
@@ -370,7 +370,7 @@ export default function NewOrder() {
                 <div className="bg-laundry-light-blue p-4 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-laundry-dark">Estimated Total:</span>
-                    <span className="text-2xl font-bold text-laundry-blue">${calculateTotal().toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-laundry-blue">₹{calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export default function NewOrder() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="standard">Standard (Next day) - Free</SelectItem>
-                      <SelectItem value="express">Express (Same day) - $5.00</SelectItem>
+                      <SelectItem value="express">Express (Same day) - ₹20.00</SelectItem>
                       <SelectItem value="scheduled">Scheduled delivery - Free</SelectItem>
                     </SelectContent>
                   </Select>
@@ -503,7 +503,7 @@ export default function NewOrder() {
                       {orderData.services.washFold.selected && (
                         <div className="flex justify-between">
                           <span>Wash & Fold ({orderData.services.washFold.weight}kg)</span>
-                          <span>${(orderData.services.washFold.weight * 2.50).toFixed(2)}</span>
+                          <span>${(orderData.services.washFold.weight * 700).toFixed(2)}</span>
                         </div>
                       )}
                       
@@ -512,7 +512,7 @@ export default function NewOrder() {
                           qty > 0 && (
                             <div key={item} className="flex justify-between">
                               <span>{item} × {qty}</span>
-                              <span>${(qty * (services.find(s => s.id === "dryClean")?.items?.find(i => i.name === item)?.price || 0)).toFixed(2)}</span>
+                              <span>₹{(qty * (services.find(s => s.id === "dryClean")?.items?.find(i => i.name === item)?.price || 0)).toFixed(2)}</span>
                             </div>
                           )
                         ))
@@ -523,7 +523,7 @@ export default function NewOrder() {
                           qty > 0 && (
                             <div key={item} className="flex justify-between">
                               <span>{item} (Ironing) × {qty}</span>
-                              <span>${(qty * (services.find(s => s.id === "ironing")?.items?.find(i => i.name === item)?.price || 0)).toFixed(2)}</span>
+                              <span>₹{(qty * (services.find(s => s.id === "ironing")?.items?.find(i => i.name === item)?.price || 0)).toFixed(2)}</span>
                             </div>
                           )
                         ))
@@ -532,7 +532,7 @@ export default function NewOrder() {
                       {orderData.deliveryPreference === "express" && (
                         <div className="flex justify-between">
                           <span>Express Delivery</span>
-                          <span>$5.00</span>
+                          <span>₹20.00</span>
                         </div>
                       )}
                       
@@ -540,7 +540,7 @@ export default function NewOrder() {
                         <div className="flex justify-between font-bold text-lg">
                           <span>Total:</span>
                           <span className="text-laundry-blue">
-                            ${(calculateTotal() + (orderData.deliveryPreference === "express" ? 5 : 0)).toFixed(2)}
+                            ₹{(calculateTotal() + (orderData.deliveryPreference === "express" ? 20 : 0)).toFixed(2)}
                           </span>
                         </div>
                       </div>
