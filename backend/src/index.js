@@ -7,6 +7,8 @@ import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
+import garmentRoutes from './routes/garments.js';
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -21,6 +23,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/garments', garmentRoutes);
+
+// Health check route for Render
+app.get("/", (req, res) => {
+    res.send("MyLaundry Backend is running!");
+});
+
 app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
     res.json({ message: ping });
