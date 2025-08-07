@@ -167,11 +167,11 @@ export default function NewOrder() {
     setIsSubmitting(true);
     
     const finalOrderData = {
-      userId: user.id,
+      userId: user._id, // FIX: Use user._id for MongoDB
       pickupDate: orderData.pickupDate,
       pickupTime: orderData.pickupTime,
-      pickupAddress: orderData.pickupAddress,
-      deliveryAddress: orderData.sameAddress ? orderData.pickupAddress : orderData.deliveryAddress,
+      address: orderData.pickupAddress,
+      estimatedDelivery: new Date(new Date(orderData.pickupDate).getTime() + 24 * 60 * 60 * 1000), // Set estimated delivery to 24 hours after pickup
       specialInstructions: orderData.specialInstructions,
       total: calculateTotal() + (orderData.deliveryPreference === "express" ? 5 : 0),
       status: 'pickup_scheduled',

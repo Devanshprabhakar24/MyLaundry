@@ -6,7 +6,7 @@ import demoRoutes from "./routes/demo.js";
 import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
-
+import adminRoutes from './routes/admin.js';
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -20,7 +20,7 @@ app.use('/api/demo', demoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('/api/admin', adminRoutes);
 app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
     res.json({ message: ping });

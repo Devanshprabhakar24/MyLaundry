@@ -39,7 +39,8 @@ export default function MyOrders() {
       const fetchOrders = async () => {
         setIsLoading(true);
         try {
-          const response = await fetch(`/api/orders/${user.id}`);
+          // FIX: Use user._id for MongoDB
+          const response = await fetch(`/api/orders/${user._id}`);
           const data = await response.json();
           setOrders(data);
         } catch (error) {
@@ -136,13 +137,15 @@ export default function MyOrders() {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // FIX: Use order._id for MongoDB
+    const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.items.some(item => item.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     
     let matchesDate = true;
     if (dateFilter !== "all") {
-      const orderDate = new Date(order.date);
+      // FIX: Use createdAt for date filtering
+      const orderDate = new Date(order.createdAt);
       const now = new Date();
       
       switch (dateFilter) {
@@ -185,7 +188,7 @@ export default function MyOrders() {
             <h1 className="text-3xl font-bold text-laundry-dark">My Orders</h1>
             <p className="text-laundry-gray">Track and manage your laundry order history</p>
           </div>
-          <Button className="btn-primary">
+          <Button className="btn-primary" onClick={() => navigate('/new-order')}>
             <Plus className="h-4 w-4 mr-2" />
             New Order
           </Button>
@@ -269,14 +272,14 @@ export default function MyOrders() {
         {/* Orders List */}
         <div className="space-y-4">
           {filteredOrders.map((order) => (
-            <Card key={order.id} className="hover:shadow-lg transition-shadow">
+            <Card key={order._id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-laundry-dark">#{order.id}</h3>
+                      <h3 className="text-lg font-semibold text-laundry-dark">#{order._id}</h3>
                       <p className="text-sm text-laundry-gray">
-                        {new Date(order.date).toLocaleDateString()} • {order.items.length} items
+                        {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} items
                       </p>
                     </div>
                     <Badge className={getStatusColor(order.status)}>
@@ -332,7 +335,7 @@ export default function MyOrders() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/track-order?orderId=${order.id}`)}
+                    onClick={() => navigate(`/track-order?orderId=${order._id}`)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
@@ -341,7 +344,7 @@ export default function MyOrders() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleReorder(order.id)}
+                    onClick={() => handleReorder(order._id)}
                     className="border-laundry-blue text-laundry-blue"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -352,7 +355,7 @@ export default function MyOrders() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRateOrder(order.id)}
+                      onClick={() => handleRateOrder(order._id)}
                       className="border-yellow-500 text-yellow-600"
                     >
                       <Star className="h-4 w-4 mr-2" />
@@ -369,7 +372,7 @@ export default function MyOrders() {
             </Card>
           ))}
 
-          {filteredOrders.length === 0 && (
+          {filteredOrders.length === 0 && !isLoading && (
             <Card>
               <CardContent className="p-12 text-center">
                 <Package className="h-16 w-16 text-laundry-gray mx-auto mb-4" />
@@ -380,7 +383,7 @@ export default function MyOrders() {
                     : "You haven't placed any orders yet. Start your first order today!"
                   }
                 </p>
-                <Button className="btn-primary">
+                <Button className="btn-primary" onClick={() => navigate('/new-order')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Place Your First Order
                 </Button>
@@ -392,3 +395,5 @@ export default function MyOrders() {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,88 +9,42 @@ import { useAuth } from "../context/AuthContext";
 import {
   Package,
   Users,
-  TrendingUp,
   Clock,
-  CheckCircle,
-  Truck,
-  AlertCircle,
   DollarSign,
-  Calendar,
   Search,
-  Filter,
-  Edit,
   Eye
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [stats, setStats] = useState({ totalOrders: 0, pendingOrders: 0, activeCustomers: 0, totalRevenue: 0 });
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Mock data for demonstration
-  const stats = {
-    totalOrders: 245,
-    pendingOrders: 23,
-    activeCustomers: 156,
-    todayRevenue: 2840.50
-  };
-
-  const orders = [
-    {
-      id: "ORD-001",
-      customer: "John Smith",
-      email: "john@example.com", 
-      phone: "+1 (555) 123-4567",
-      status: "pickup_scheduled",
-      pickupDate: "2024-01-15",
-      deliveryDate: "2024-01-16",
-      items: ["3kg Wash & Fold", "2 Shirts (Dry Clean)"],
-      total: 28.97,
-      address: "123 Main St, City, State",
-      specialInstructions: "Please handle delicate items with care"
-    },
-    {
-      id: "ORD-002", 
-      customer: "Sarah Johnson",
-      email: "sarah@example.com",
-      phone: "+1 (555) 234-5678",
-      status: "washing",
-      pickupDate: "2024-01-14",
-      deliveryDate: "2024-01-15",
-      items: ["5kg Wash & Fold"],
-      total: 12.50,
-      address: "456 Oak Ave, City, State",
-      specialInstructions: ""
-    },
-    {
-      id: "ORD-003",
-      customer: "Mike Chen", 
-      email: "mike@example.com",
-      phone: "+1 (555) 345-6789",
-      status: "ready",
-      pickupDate: "2024-01-13",
-      deliveryDate: "2024-01-14",
-      items: ["1 Suit", "3 Shirts (Dry Clean)"],
-      total: 51.96,
-      address: "789 Pine St, City, State",
-      specialInstructions: "Starch on shirts, no starch on suit"
-    },
-    {
-      id: "ORD-004",
-      customer: "Emily Rodriguez",
-      email: "emily@example.com",
-      phone: "+1 (555) 456-7890", 
-      status: "out_for_delivery",
-      pickupDate: "2024-01-12",
-      deliveryDate: "2024-01-13",
-      items: ["2kg Wash & Fold", "1 Dress (Dry Clean)"],
-      total: 23.99,
-      address: "321 Elm St, City, State",
-      specialInstructions: "Contactless delivery preferred"
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [statsRes, ordersRes] = await Promise.all([
+          fetch('/api/admin/stats'),
+          fetch('/api/admin/orders')
+        ]);
+        const statsData = await statsRes.json();
+        const ordersData = await ordersRes.json();
+        setStats(statsData);
+        setOrders(ordersData);
+      } catch (error) {
+        console.error("Failed to fetch admin data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -105,28 +59,39 @@ export default function AdminDashboard() {
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case 'pickup_scheduled': return 'Pickup Scheduled';
-      case 'picked_up': return 'Picked Up';
-      case 'washing': return 'Washing';
-      case 'ready': return 'Ready for Delivery';
-      case 'out_for_delivery': return 'Out for Delivery';
-      case 'completed': return 'Completed';
-      default: return 'Unknown';
+    const statusMap = {
+      pickup_scheduled: 'Pickup Scheduled',
+      picked_up: 'Picked Up',
+      washing: 'Washing',
+      ready: 'Ready for Delivery',
+      out_for_delivery: 'Out for Delivery',
+      completed: 'Completed'
+    };
+    return statusMap[status] || 'Unknown';
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+        const response = await fetch(`/api/admin/orders/${orderId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (response.ok) {
+            setOrders(orders.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
+            alert(`Order status updated to: ${getStatusText(newStatus)}`);
+        } else {
+            alert("Failed to update order status.");
+        }
+    } catch (error) {
+        console.error("Failed to update order status:", error);
     }
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    // In a real app, this would make an API call
-    console.log(`Updating order ${orderId} to status: ${newStatus}`);
-    // For demo purposes, we'll just log it
-    alert(`Order ${orderId} status updated to: ${getStatusText(newStatus)}`);
-  };
-
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const customerName = order.userId?.name || '';
+    const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order._id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -135,13 +100,11 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-laundry-dark">Admin Dashboard</h1>
           <p className="text-laundry-gray">Welcome back, {user?.name}. Manage orders and monitor operations.</p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
@@ -154,7 +117,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -166,7 +128,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -178,13 +139,12 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-laundry-gray">Today's Revenue</p>
-                  <p className="text-2xl font-bold text-laundry-blue">${stats.todayRevenue}</p>
+                  <p className="text-sm text-laundry-gray">Total Revenue</p>
+                  <p className="text-2xl font-bold text-laundry-blue">${stats.totalRevenue.toFixed(2)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-laundry-blue" />
               </div>
@@ -192,26 +152,20 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Orders Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-laundry-blue" />
-                  Order Management
-                </CardTitle>
-                <CardDescription>Monitor and update order statuses</CardDescription>
-              </div>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-laundry-blue" />
+              Order Management
+            </CardTitle>
+            <CardDescription>Monitor and update order statuses</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-laundry-gray" />
                 <Input
-                  placeholder="Search orders, customers, or order IDs..."
+                  placeholder="Search by customer name or order ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -233,15 +187,14 @@ export default function AdminDashboard() {
               </Select>
             </div>
 
-            {/* Orders Table */}
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <div key={order.id} className="border rounded-lg p-4 bg-white">
+                <div key={order._id} className="border rounded-lg p-4 bg-white">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                       <div>
-                        <h3 className="font-semibold text-laundry-dark">#{order.id}</h3>
-                        <p className="text-sm text-laundry-gray">{order.customer}</p>
+                        <h3 className="font-semibold text-laundry-dark">#{order._id}</h3>
+                        <p className="text-sm text-laundry-gray">{order.userId?.name}</p>
                       </div>
                       <Badge className={getStatusColor(order.status)}>
                         {getStatusText(order.status)}
@@ -251,13 +204,13 @@ export default function AdminDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                        onClick={() => setSelectedOrder(selectedOrder === order._id ? null : order._id)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Select
                         value={order.status}
-                        onValueChange={(newStatus) => updateOrderStatus(order.id, newStatus)}
+                        onValueChange={(newStatus) => updateOrderStatus(order._id, newStatus)}
                       >
                         <SelectTrigger className="w-40">
                           <SelectValue />
@@ -289,19 +242,17 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
-                  {selectedOrder === order.id && (
+                  {selectedOrder === order._id && (
                     <div className="mt-4 pt-4 border-t bg-gray-50 p-4 rounded">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <h4 className="font-semibold text-laundry-dark mb-2">Customer Details</h4>
-                          <p><span className="text-laundry-gray">Email:</span> {order.email}</p>
-                          <p><span className="text-laundry-gray">Phone:</span> {order.phone}</p>
+                          <p><span className="text-laundry-gray">Email:</span> {order.userId?.email}</p>
                           <p><span className="text-laundry-gray">Address:</span> {order.address}</p>
                         </div>
                         <div>
                           <h4 className="font-semibold text-laundry-dark mb-2">Order Details</h4>
-                          <p><span className="text-laundry-gray">Delivery Date:</span> {new Date(order.deliveryDate).toLocaleDateString()}</p>
+                          <p><span className="text-laundry-gray">Delivery Date:</span> {new Date(order.estimatedDelivery).toLocaleDateString()}</p>
                           <p><span className="text-laundry-gray">Items:</span></p>
                           <ul className="ml-4 list-disc">
                             {order.items.map((item, idx) => (
@@ -318,7 +269,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
 
-              {filteredOrders.length === 0 && (
+              {filteredOrders.length === 0 && !isLoading && (
                 <div className="text-center py-8 text-laundry-gray">
                   No orders found matching your search criteria.
                 </div>
