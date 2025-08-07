@@ -178,7 +178,7 @@ export default function NewOrder() {
       items: Object.entries(orderData.services)
         .filter(([, service]) => service.selected)
         .map(([key, service]) => {
-          if (key === 'washFold') return `${service.weight}kg Wash & Fold`;
+          if (key === 'washFold') return `{service.weight}kg Wash & Fold`;
           return Object.entries(service.items)
             .filter(([, qty]) => qty > 0)
             .map(([itemName, qty]) => `${qty} ${itemName}(s) (${key})`)

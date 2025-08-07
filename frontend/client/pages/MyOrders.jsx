@@ -165,11 +165,11 @@ export default function MyOrders() {
   });
 
   const handleReorder = (orderId) => {
-    alert(`Reordering ${orderId} - This would redirect to new order page with pre-filled items`);
+    alert(`Reordering ₹{orderId} - This would redirect to new order page with pre-filled items`);
   };
 
   const handleRateOrder = (orderId) => {
-    alert(`Rating order ${orderId} - This would open a rating modal`);
+    alert(`Rating order ₹{orderId} - This would open a rating modal`);
   };
 
   const stats = {
@@ -210,7 +210,7 @@ export default function MyOrders() {
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-2xl font-bold text-laundry-blue">${stats.totalSpent.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-laundry-blue">₹{stats.totalSpent.toFixed(2)}</div>
               <div className="text-sm text-laundry-gray">Total Spent</div>
             </CardContent>
           </Card>
@@ -291,7 +291,7 @@ export default function MyOrders() {
                   </div>
                   
                   <div className="text-right">
-                    <div className="text-xl font-bold text-laundry-blue">${order.total}</div>
+                    <div className="text-xl font-bold text-laundry-blue">₹{order.total}</div>
                     {order.rating && (
                       <div className="flex items-center gap-1 justify-end">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -326,7 +326,7 @@ export default function MyOrders() {
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-laundry-gray" />
                     <span className="text-laundry-gray">Total:</span>
-                    <span className="font-medium">${order.total}</span>
+                    <span className="font-medium">₹{order.total}</span>
                   </div>
                 </div>
 
@@ -335,7 +335,7 @@ export default function MyOrders() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/track-order?orderId=${order._id}`)}
+                    onClick={() => navigate(`/track-order?orderId=₹{order._id}`)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
