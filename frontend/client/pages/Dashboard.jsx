@@ -18,7 +18,7 @@ import {
   Phone,
   MapPin
 } from "lucide-react";
-
+import API_URL from '../apiConfig'; // Add this line
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -30,7 +30,7 @@ export default function Dashboard() {
     if (isAuthenticated && user) {
       const fetchOrders = async () => {
         try {
-          const response = await fetch(`/api/orders/${user.id}`);
+          const response = await fetch(`${API_URL}/api/orders/${user.id}`);
           const orders = await response.json();
           
           const active = orders.find(o => o.status !== 'completed');

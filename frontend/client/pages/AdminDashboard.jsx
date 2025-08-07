@@ -14,7 +14,7 @@ import {
   Search,
   Eye
 } from "lucide-react";
-
+import API_URL from '../apiConfig'; 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -30,8 +30,8 @@ export default function AdminDashboard() {
       setIsLoading(true);
       try {
         const [statsRes, ordersRes] = await Promise.all([
-          fetch('/api/admin/stats'),
-          fetch('/api/admin/orders')
+          fetch('${API_URL}/api/admin/stats'),
+          fetch('${API_URL}/api/admin/orders')
         ]);
         const statsData = await statsRes.json();
         const ordersData = await ordersRes.json();
@@ -72,8 +72,8 @@ export default function AdminDashboard() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-        const response = await fetch(`/api/admin/orders/${orderId}`, {
-            method: 'PUT',
+        const response = await fetch(`${API_URL}/api/admin/orders/${orderId}`, {
+            method: 'PUT',  
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
         });

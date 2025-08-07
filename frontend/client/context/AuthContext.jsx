@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-
+import API_URL from '../apiConfig'; // Add this line
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('https://mylaundry-backend-hi3w.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
 
   const signup = async (name, email, password) => {
     try {
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('https://mylaundry-backend-hi3w.onrender.com/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

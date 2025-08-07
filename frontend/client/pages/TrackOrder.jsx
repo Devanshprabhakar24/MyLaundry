@@ -17,7 +17,7 @@ import {
   AlertCircle,
   RefreshCw
 } from "lucide-react";
-
+import API_URL from '../apiConfig'; // Add this line
 export default function TrackOrder() {
   const [searchParams] = useSearchParams();
   const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
@@ -36,7 +36,7 @@ export default function TrackOrder() {
     setTrackedOrder(null);
     
     try {
-      const response = await fetch(`/api/orders/details/${orderId}`);
+      const response = await fetch(`${API_URL}/api/orders/details/${orderId}`);
       const data = await response.json();
 
       if (response.ok) {

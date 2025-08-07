@@ -22,7 +22,7 @@ import {
   RefreshCw,
   MoreVertical
 } from "lucide-react";
-
+import API_URL from '../apiConfig'; // Add this line
 export default function MyOrders() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -40,7 +40,7 @@ export default function MyOrders() {
         setIsLoading(true);
         try {
           // FIX: Use user._id for MongoDB
-          const response = await fetch(`/api/orders/${user._id}`);
+          const response = await fetch(`${API_URL}/api/orders/${user._id}`);
           const data = await response.json();
           setOrders(data);
         } catch (error) {

@@ -28,7 +28,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-
+import API_URL from '../apiConfig'; // Add this line
 export default function Profile() {
   const { user, setUser, isAuthenticated } = useAuth();
 
@@ -110,7 +110,7 @@ export default function Profile() {
   const handleProfileSave = async () => {
     setIsLoading(true);
     try {
-        const response = await fetch(`/api/users/${user.id}`, {
+        const response = await fetch(`${API_URL}/api/users/${user.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
