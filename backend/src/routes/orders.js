@@ -13,6 +13,21 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
+// Get a single order by ID
+router.get('/details/:orderId', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId).populate('userId', 'name email');
+        if (order) {
+            res.json(order);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
 // Create a new order
 router.post('/', async (req, res) => {
     try {
