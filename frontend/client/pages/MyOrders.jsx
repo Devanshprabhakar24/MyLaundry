@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +26,36 @@ import {
 export default function MyOrders() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchOrders = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/orders/${user.id}`);
+          const data = await response.json();
+          setOrders(data);
+        } catch (error) {
+          console.error("Failed to fetch orders:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchOrders();
+    } else if (!isAuthenticated) {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,90 +98,6 @@ export default function MyOrders() {
       </div>
     );
   }
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [selectedOrder, setSelectedOrder] = useState(null);
-
-  // Mock order data
-  const orders = [
-    {
-      id: "ORD-001",
-      date: "2024-01-15",
-      status: "washing",
-      items: ["3kg Wash & Fold", "2 Shirts (Dry Clean)"],
-      itemsCount: 5,
-      total: 28.97,
-      pickupDate: "2024-01-15",
-      deliveryDate: "2024-01-16",
-      rating: null,
-      canRate: false,
-      canReorder: true,
-      statusHistory: [
-        { status: "pickup_scheduled", time: "08:00 AM", description: "Pickup scheduled" },
-        { status: "picked_up", time: "10:30 AM", description: "Items collected" },
-        { status: "washing", time: "11:15 AM", description: "Currently being processed" }
-      ]
-    },
-    {
-      id: "ORD-002",
-      date: "2024-01-10",
-      status: "completed",
-      items: ["5kg Wash & Fold"],
-      itemsCount: 12,
-      total: 12.50,
-      pickupDate: "2024-01-10",
-      deliveryDate: "2024-01-11",
-      rating: 5,
-      canRate: false,
-      canReorder: true,
-      statusHistory: [
-        { status: "pickup_scheduled", time: "09:00 AM", description: "Pickup scheduled" },
-        { status: "picked_up", time: "11:00 AM", description: "Items collected" },
-        { status: "washing", time: "12:00 PM", description: "Items processed" },
-        { status: "ready", time: "08:00 AM", description: "Ready for delivery" },
-        { status: "out_for_delivery", time: "10:00 AM", description: "Out for delivery" },
-        { status: "completed", time: "02:30 PM", description: "Delivered successfully" }
-      ]
-    },
-    {
-      id: "ORD-003",
-      date: "2024-01-05", 
-      status: "completed",
-      items: ["1 Suit", "3 Shirts (Dry Clean)", "2 Trousers"],
-      itemsCount: 6,
-      total: 51.96,
-      pickupDate: "2024-01-05",
-      deliveryDate: "2024-01-06",
-      rating: 4,
-      canRate: false,
-      canReorder: true,
-      statusHistory: [
-        { status: "pickup_scheduled", time: "10:00 AM", description: "Pickup scheduled" },
-        { status: "picked_up", time: "10:15 AM", description: "Items collected" },
-        { status: "washing", time: "11:00 AM", description: "Items processed" },
-        { status: "ready", time: "09:00 AM", description: "Ready for delivery" },
-        { status: "out_for_delivery", time: "11:00 AM", description: "Out for delivery" },
-        { status: "completed", time: "03:45 PM", description: "Delivered successfully" }
-      ]
-    },
-    {
-      id: "ORD-004",
-      date: "2023-12-28",
-      status: "completed", 
-      items: ["2kg Wash & Fold", "1 Dress (Dry Clean)"],
-      itemsCount: 8,
-      total: 23.99,
-      pickupDate: "2023-12-28",
-      deliveryDate: "2023-12-29",
-      rating: null,
-      canRate: true,
-      canReorder: true,
-      statusHistory: [
-        { status: "completed", time: "01:15 PM", description: "Delivered successfully" }
-      ]
-    }
-  ];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -333,7 +276,7 @@ export default function MyOrders() {
                     <div>
                       <h3 className="text-lg font-semibold text-laundry-dark">#{order.id}</h3>
                       <p className="text-sm text-laundry-gray">
-                        {new Date(order.date).toLocaleDateString()} • {order.itemsCount} items
+                        {new Date(order.date).toLocaleDateString()} • {order.items.length} items
                       </p>
                     </div>
                     <Badge className={getStatusColor(order.status)}>
@@ -375,7 +318,7 @@ export default function MyOrders() {
                   <div className="flex items-center gap-2">
                     <Truck className="h-4 w-4 text-laundry-gray" />
                     <span className="text-laundry-gray">Delivery:</span>
-                    <span>{new Date(order.deliveryDate).toLocaleDateString()}</span>
+                    <span>{new Date(order.estimatedDelivery).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-laundry-gray" />
@@ -384,46 +327,28 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                {/* Expandable Details */}
-                {selectedOrder === order.id && (
-                  <div className="mt-4 pt-4 border-t bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-laundry-dark mb-3">Order Timeline</h4>
-                    <div className="space-y-2">
-                      {order.statusHistory.map((history, idx) => (
-                        <div key={idx} className="flex items-center gap-3 text-sm">
-                          <div className="w-2 h-2 bg-laundry-blue rounded-full" />
-                          <span className="text-laundry-gray">{history.time}</span>
-                          <span>{history.description}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 pt-4 border-t">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                    onClick={() => navigate(`/track-order?orderId=${order.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    {selectedOrder === order.id ? 'Hide' : 'View'} Details
+                    View Details
                   </Button>
                   
-                  {order.canReorder && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleReorder(order.id)}
-                      className="border-laundry-blue text-laundry-blue"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Reorder
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleReorder(order.id)}
+                    className="border-laundry-blue text-laundry-blue"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reorder
+                  </Button>
                   
-                  {order.canRate && (
+                  {order.status === 'completed' && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -439,13 +364,6 @@ export default function MyOrders() {
                     <Download className="h-4 w-4 mr-2" />
                     Receipt
                   </Button>
-                  
-                  {order.status !== 'completed' && (
-                    <Button variant="outline" size="sm">
-                      <Package className="h-4 w-4 mr-2" />
-                      Track
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -470,32 +388,6 @@ export default function MyOrders() {
             </Card>
           )}
         </div>
-
-        {/* Quick Actions */}
-        {filteredOrders.length > 0 && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage all your orders efficiently</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button variant="outline" className="border-laundry-blue text-laundry-blue">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download All Receipts
-                </Button>
-                <Button variant="outline" className="border-laundry-blue text-laundry-blue">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reorder Last Order
-                </Button>
-                <Button variant="outline" className="border-laundry-blue text-laundry-blue">
-                  <Star className="h-4 w-4 mr-2" />
-                  Rate Recent Orders
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

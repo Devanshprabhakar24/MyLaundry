@@ -9,8 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Shirt, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("user@example.com");
+  const [password, setPassword] = useState("123456789");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,12 +25,16 @@ export default function Login() {
     setError("");
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        // Redirect based on user role or to dashboard
-        navigate("/dashboard");
+      const result = await login(email, password);
+      if (result.success) {
+        // Redirect based on user role
+        if (result.user.role === 'admin') {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
-        setError("Invalid email or password. Try: user@example.com / admin@mylaundry.com with password: 123456789");
+        setError(result.message || "Invalid email or password.");
       }
     } catch (err) {
       setError("Login failed. Please try again.");

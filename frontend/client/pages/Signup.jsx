@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,8 +25,11 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const { signup } = useAuth();
+  const navigate = useNavigate();
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -33,23 +37,33 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     if (!acceptTerms) {
-      alert("Please accept the terms and conditions");
+      setError("Please accept the terms and conditions.");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
     
     setIsLoading(true);
     
-    // Simulate signup API call
-    setTimeout(() => {
+    try {
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      const result = await signup(fullName, formData.email, formData.password);
+
+      if (result.success) {
+        navigate("/dashboard");
+      } else {
+        setError(result.message || "An error occurred during signup.");
+      }
+    } catch (err) {
+      setError("Signup failed. Please try again later.");
+    } finally {
       setIsLoading(false);
-      // In a real app, handle successful signup here
-      console.log("Signup attempted with:", formData);
-    }, 1000);
+    }
   };
 
   return (
@@ -81,6 +95,13 @@ export default function Signup() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Personal Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-laundry-dark flex items-center gap-2">
@@ -137,70 +158,7 @@ export default function Signup() {
                     placeholder="Enter your phone number"
                     value={formData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
-                    required
                   />
-                </div>
-              </div>
-
-              {/* Address Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-laundry-dark flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-laundry-blue" />
-                  Address Information
-                </h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="Enter your full address"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="Enter your city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange("city", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">Zip Code</Label>
-                    <Input
-                      id="zipCode"
-                      placeholder="Enter zip code"
-                      value={formData.zipCode}
-                      onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Service Preference */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-laundry-dark">Service Preference</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="serviceType">Primary Service Interest</Label>
-                  <Select onValueChange={(value) => handleInputChange("serviceType", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your primary interest" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="wash-fold">Wash & Fold</SelectItem>
-                      <SelectItem value="dry-cleaning">Dry Cleaning</SelectItem>
-                      <SelectItem value="subscription">Subscription Plan</SelectItem>
-                      <SelectItem value="all">All Services</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
@@ -274,18 +232,6 @@ export default function Signup() {
                     <Link to="/privacy" className="text-laundry-blue hover:underline">
                       Privacy Policy
                     </Link>
-                  </Label>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="marketing"
-                    checked={acceptMarketing}
-                    onCheckedChange={(checked) => setAcceptMarketing(checked)}
-                    className="mt-1"
-                  />
-                  <Label htmlFor="marketing" className="text-sm text-laundry-gray cursor-pointer leading-relaxed">
-                    I would like to receive promotional emails about special offers and new services
                   </Label>
                 </div>
               </div>

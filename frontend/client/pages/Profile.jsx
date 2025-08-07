@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
-import { 
-  User, 
-  MapPin, 
-  CreditCard, 
-  Bell, 
-  Shield, 
+import {
+  User,
+  MapPin,
+  CreditCard,
+  Bell,
+  Shield,
   Trash2,
   Plus,
   Edit,
@@ -32,50 +32,6 @@ import {
 export default function Profile() {
   const { user, setUser, isAuthenticated } = useAuth();
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Login Required</CardTitle>
-              <CardDescription>
-                You need to login to access your profile
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                Please login to access and manage your profile settings.
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  className="btn-primary w-full"
-                  onClick={() => window.location.href = '/login'}
-                >
-                  Login to Your Account
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => window.location.href = '/signup'}
-                >
-                  Create New Account
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => window.location.href = '/'}
-                >
-                  Return to Home
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,6 +46,12 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: ""
   });
+
+  useEffect(() => {
+    if (user) {
+        setProfileData(prev => ({...prev, ...user}))
+    }
+  }, [user]);
 
   // Addresses state
   const [addresses, setAddresses] = useState([
@@ -147,18 +109,30 @@ export default function Profile() {
 
   const handleProfileSave = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUser({
-        ...user,
-        name: profileData.name,
-        email: profileData.email,
-        phone: profileData.phone
-      });
-      setIsEditing(false);
-      setIsLoading(false);
-      alert("Profile updated successfully!");
-    }, 1000);
+    try {
+        const response = await fetch(`/api/users/${user.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: profileData.name,
+                email: profileData.email,
+                phone: profileData.phone
+            })
+        });
+        if (response.ok) {
+            const updatedUser = await response.json();
+            setUser(updatedUser); // Update context
+            alert("Profile updated successfully!");
+            setIsEditing(false);
+        } else {
+            alert("Failed to update profile.");
+        }
+    } catch (error) {
+        console.error("Failed to update profile", error);
+        alert("An error occurred while updating the profile.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleAddAddress = () => {
@@ -201,6 +175,51 @@ export default function Profile() {
   const handleNotificationChange = (key, value) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
   };
+  
+    // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Login Required</CardTitle>
+              <CardDescription>
+                You need to login to access your profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Please login to access and manage your profile settings.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button
+                  className="btn-primary w-full"
+                  onClick={() => window.location.href = '/login'}
+                >
+                  Login to Your Account
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.location.href = '/signup'}
+                >
+                  Create New Account
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => window.location.href = '/'}
+                >
+                  Return to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

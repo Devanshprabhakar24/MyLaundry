@@ -47,9 +47,6 @@ export default function NewOrder() {
     
     // Payment
     paymentMethod: "card",
-    
-    // Total
-    estimatedTotal: 0
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,12 +132,10 @@ export default function NewOrder() {
   const calculateTotal = () => {
     let total = 0;
     
-    // Wash & Fold
     if (orderData.services.washFold.selected) {
       total += orderData.services.washFold.weight * 2.50;
     }
     
-    // Dry Cleaning
     if (orderData.services.dryClean.selected) {
       const dryCleanService = services.find(s => s.id === "dryClean");
       if (dryCleanService?.items) {
@@ -153,7 +148,6 @@ export default function NewOrder() {
       }
     }
     
-    // Ironing
     if (orderData.services.ironing.selected) {
       const ironingService = services.find(s => s.id === "ironing");
       if (ironingService?.items) {
@@ -171,14 +165,48 @@ export default function NewOrder() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    
+    const finalOrderData = {
+      userId: user.id,
+      pickupDate: orderData.pickupDate,
+      pickupTime: orderData.pickupTime,
+      pickupAddress: orderData.pickupAddress,
+      deliveryAddress: orderData.sameAddress ? orderData.pickupAddress : orderData.deliveryAddress,
+      specialInstructions: orderData.specialInstructions,
+      total: calculateTotal() + (orderData.deliveryPreference === "express" ? 5 : 0),
+      status: 'pickup_scheduled',
+      items: Object.entries(orderData.services)
+        .filter(([, service]) => service.selected)
+        .map(([key, service]) => {
+          if (key === 'washFold') return `${service.weight}kg Wash & Fold`;
+          return Object.entries(service.items)
+            .filter(([, qty]) => qty > 0)
+            .map(([itemName, qty]) => `${qty} ${itemName}(s) (${key})`)
+            .join(', ');
+        }).flat().filter(Boolean)
+    };
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(finalOrderData),
+      });
+
+      if (response.ok) {
+        alert("Order placed successfully! You'll receive a confirmation email shortly.");
+        navigate("/my-orders");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order submission error:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      alert("Order placed successfully! You'll receive a confirmation email shortly.");
-      // Navigate to dashboard after successful order
-      navigate("/dashboard");
-    }, 2000);
+    }
   };
 
   const nextStep = () => {

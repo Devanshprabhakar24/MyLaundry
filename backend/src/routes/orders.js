@@ -1,0 +1,27 @@
+import { Router } from 'express';
+import Order from '../models/Order.js';
+
+const router = Router();
+
+// Get all orders for a user
+router.get('/:userId', async (req, res) => {
+    try {
+        const orders = await Order.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Create a new order
+router.post('/', async (req, res) => {
+    try {
+        const newOrder = new Order(req.body);
+        await newOrder.save();
+        res.status(201).json(newOrder);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+export default router;

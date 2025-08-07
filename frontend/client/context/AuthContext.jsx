@@ -17,46 +17,55 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    // Simulate API call - replace with real authentication
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock users for demo
-    const mockUsers = [
-      {
-        id: '1',
-        name: 'John Smith',
-        email: 'user@example.com',
-        role: 'user',
-        phone: '+1 (555) 123-4567',
-        address: '123 Main St, City, State 12345'
-      },
-      {
-        id: '2',
-        name: 'Admin User',
-        email: 'admin@mylaundry.com',
-        role: 'admin',
-        phone: '+1 (555) 987-6543'
-      },
-      {
-        id: '3',
-        name: 'Dev User',
-        email: 'dev24prabhakar@gmail.com',
-        role: 'user',
-        phone: '+1 (555) 456-7890',
-        address: '456 Oak Ave, City, State 67890'
-      }
-    ];
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === '123456789') {
-      setUser(foundUser);
-      setIsAuthenticated(true);
-      localStorage.setItem('mylaundry_user', JSON.stringify(foundUser));
-      return true;
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, message: data.message || 'Invalid credentials' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'An error occurred during login.' };
     }
-    
-    return false;
+  };
+
+  const signup = async (name, email, password) => {
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, message: data.message || 'Signup failed.' };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, message: 'An error occurred during signup.' };
+    }
   };
 
   const logout = () => {
@@ -69,6 +78,7 @@ export function AuthProvider({ children }) {
     user,
     isAuthenticated,
     login,
+    signup,
     logout,
     setUser
   };

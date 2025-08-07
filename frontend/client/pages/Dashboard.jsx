@@ -1,14 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  Truck, 
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  Truck,
   Plus,
   Eye,
   CreditCard,
@@ -22,9 +22,37 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const [activeOrder, setActiveOrder] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchOrders = async () => {
+        try {
+          const response = await fetch(`/api/orders/${user.id}`);
+          const orders = await response.json();
+          
+          const active = orders.find(o => o.status !== 'completed');
+          const recent = orders.filter(o => o.status === 'completed').slice(0, 2);
+
+          setActiveOrder(active);
+          setRecentOrders(recent);
+        } catch (error) {
+          console.error("Failed to fetch orders:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchOrders();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,33 +96,6 @@ export default function Dashboard() {
     );
   }
 
-  // Mock data for demonstration
-  const activeOrder = {
-    id: "ORD-001",
-    status: "washing",
-    pickupDate: "2024-01-15",
-    estimatedDelivery: "2024-01-16",
-    items: ["3kg Wash & Fold", "2 Shirts (Dry Clean)"],
-    total: 28.97
-  };
-
-  const recentOrders = [
-    {
-      id: "ORD-002",
-      date: "2024-01-10",
-      status: "completed",
-      items: "5kg Wash & Fold",
-      total: 12.50
-    },
-    {
-      id: "ORD-003", 
-      date: "2024-01-05",
-      status: "completed",
-      items: "1 Suit, 3 Shirts (Dry Clean)",
-      total: 51.96
-    }
-  ];
-
   const quickActions = [
     {
       title: "New Order",
@@ -104,7 +105,7 @@ export default function Dashboard() {
       color: "bg-laundry-blue"
     },
     {
-      title: "Track Order", 
+      title: "Track Order",
       description: "Check order status",
       icon: <Eye className="h-6 w-6" />,
       link: "/track-order",
@@ -112,7 +113,7 @@ export default function Dashboard() {
     },
     {
       title: "My Orders",
-      description: "View order history", 
+      description: "View order history",
       icon: <Package className="h-6 w-6" />,
       link: "/my-orders",
       color: "bg-purple-600"
@@ -205,7 +206,7 @@ export default function Dashboard() {
                       <span className="text-laundry-gray">Total:</span>
                       <span className="font-bold text-laundry-blue">${activeOrder.total}</span>
                     </div>
-                    
+
                     {/* Progress Indicator */}
                     <div className="mt-6">
                       <div className="flex items-center justify-between text-sm text-laundry-gray mb-2">
@@ -216,7 +217,7 @@ export default function Dashboard() {
                         <div className="bg-laundry-blue h-2 rounded-full" style={{ width: '60%' }}></div>
                       </div>
                     </div>
-                    
+
                     <Button
                       className="w-full btn-primary mt-4"
                       onClick={() => navigate('/track-order')}
@@ -287,21 +288,21 @@ export default function Dashboard() {
                     <div className="text-sm text-laundry-gray">{user?.email}</div>
                   </div>
                 </div>
-                
+
                 {user?.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-laundry-gray" />
                     <span className="text-sm text-laundry-gray">{user.phone}</span>
                   </div>
                 )}
-                
+
                 {user?.address && (
                   <div className="flex items-start gap-2">
                     <MapPin className="h-4 w-4 text-laundry-gray mt-1" />
                     <span className="text-sm text-laundry-gray">{user.address}</span>
                   </div>
                 )}
-                
+
                 <Button
                   variant="outline"
                   className="w-full border-laundry-blue text-laundry-blue"
