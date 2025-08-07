@@ -2,8 +2,7 @@
   "name": "mylaundry-monorepo",
   "version": "1.0.0",
   "scripts": {
-    "install-all": "npm install --prefix frontend && npm install --prefix backend",
-    "vercel-build": "npm run install-all && npm run build --prefix frontend"
+    "vercel-build": "npm install --prefix frontend && npm install --prefix backend && npm run build --prefix frontend"
   },
   "dependencies": {}
 }
