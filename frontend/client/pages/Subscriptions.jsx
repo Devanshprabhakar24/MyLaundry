@@ -38,8 +38,7 @@ export default function Subscriptions() {
   const [paymentData, setPaymentData] = useState({
     cardNumber: "",
     cardHolder: "",
-    expiryMonth: "",
-    expiryYear: "",
+    expiry: "",
     cvv: "",
     billingAddress: "",
     city: "",
@@ -181,14 +180,52 @@ export default function Subscriptions() {
     setIsProcessing(true);
     setPaymentError("");
 
+    // Validate required fields
+    if (!paymentData.cardNumber || !paymentData.cardHolder || !paymentData.expiry || !paymentData.cvv || !paymentData.billingAddress || !paymentData.city || !paymentData.zipCode) {
+      setPaymentError("Please fill in all required fields.");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Validate card number length
+    const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
+    if (cardNumber.length !== 16) {
+      setPaymentError("Please enter a valid 16-digit card number.");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Validate expiry date
+    const expiryParts = paymentData.expiry.split('/');
+    if (expiryParts.length !== 2 || expiryParts[0].length !== 2 || expiryParts[1].length !== 2) {
+      setPaymentError("Please enter a valid expiry date (MM/YY).");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Validate CVV
+    if (paymentData.cvv.length < 3) {
+      setPaymentError("Please enter a valid CVV.");
+      setIsProcessing(false);
+      return;
+    }
+
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
+      // Debug: Log payment data
+      console.log('Payment Data:', paymentData);
+      
       // Fake payment gateway simulation
       const paymentResult = await simulatePayment(paymentData);
       
       if (paymentResult.success) {
+        // Extract expiry month and year from formatted string
+        const expiryParts = paymentData.expiry.split('/');
+        const expiryMonth = expiryParts[0] || '';
+        const expiryYear = expiryParts[1] || '';
+
         // Create subscription in backend
         const subscriptionData = {
           userId: user._id,
@@ -199,7 +236,18 @@ export default function Subscriptions() {
           startDate: new Date(),
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
           weightAllowance: selectedPlan.weightAllowance,
-          pickupsAllowed: selectedPlan.pickups
+          pickupsAllowed: selectedPlan.pickups,
+          paymentMethod: {
+            cardLast4: paymentData.cardNumber.replace(/\s/g, '').slice(-4),
+            cardBrand: 'Visa', // Default for demo
+            expiryMonth: expiryMonth,
+            expiryYear: expiryYear
+          },
+          billingAddress: {
+            address: paymentData.billingAddress,
+            city: paymentData.city,
+            zipCode: paymentData.zipCode
+          }
         };
 
         const response = await fetch(`${API_URL}/api/subscriptions`, {
@@ -255,25 +303,29 @@ export default function Subscriptions() {
   };
 
   const formatCardNumber = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    // Remove all non-digits and spaces
+    const v = value.replace(/\D/g, '');
+    
+    // Format as groups of 4 digits
     const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
+    for (let i = 0; i < v.length && i < 16; i += 4) {
+      parts.push(v.substring(i, i + 4));
     }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
+    
+    return parts.join(' ');
   };
 
   const formatExpiry = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    // Remove all non-digits
+    const v = value.replace(/\D/g, '');
+    
+    // Format as MM/YY
     if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
+      const month = v.substring(0, 2);
+      const year = v.substring(2, 4);
+      return month + '/' + year;
     }
+    
     return v;
   };
 
@@ -321,13 +373,12 @@ export default function Subscriptions() {
                 <Input
                   id="expiry"
                   placeholder="MM/YY"
-                  value={paymentData.expiryMonth + paymentData.expiryYear}
+                  value={paymentData.expiry}
                   onChange={(e) => {
                     const formatted = formatExpiry(e.target.value);
                     setPaymentData(prev => ({
                       ...prev,
-                      expiryMonth: formatted.substring(0, 2),
-                      expiryYear: formatted.substring(3, 5)
+                      expiry: formatted
                     }));
                   }}
                   maxLength={5}
