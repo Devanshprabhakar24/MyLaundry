@@ -173,6 +173,23 @@ export default function Subscriptions() {
     setShowPaymentModal(true);
     setPaymentError("");
     setPaymentSuccess(false);
+    // Reset payment data
+    setPaymentData({
+      cardNumber: "",
+      cardHolder: "",
+      expiry: "",
+      cvv: "",
+      billingAddress: "",
+      city: "",
+      zipCode: ""
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowPaymentModal(false);
+    setPaymentError("");
+    setPaymentSuccess(false);
+    setIsProcessing(false);
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -261,7 +278,7 @@ export default function Subscriptions() {
         if (response.ok) {
           setPaymentSuccess(true);
           setTimeout(() => {
-            setShowPaymentModal(false);
+            handleCloseModal();
             navigate('/dashboard');
           }, 2000);
         } else {
@@ -329,191 +346,214 @@ export default function Subscriptions() {
     return v;
   };
 
-  const PaymentModal = () => (
-    <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-laundry-blue" />
-            Complete Subscription
-          </DialogTitle>
-          <DialogDescription>
-            Subscribe to {selectedPlan?.name} Plan for ₹{selectedPlan?.price}/month
-          </DialogDescription>
-        </DialogHeader>
+  const PaymentModal = () => {
+    if (!showPaymentModal) return null;
 
-        {paymentSuccess ? (
-          <div className="text-center py-8">
-            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <Check className="h-8 w-8 text-green-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">Payment Successful!</h3>
-            <p className="text-green-600">Your {selectedPlan?.name} subscription is now active.</p>
-          </div>
-        ) : (
-          <form onSubmit={handlePaymentSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <Input
-                id="cardNumber"
-                placeholder="1234 5678 9012 3456"
-                value={paymentData.cardNumber}
-                onChange={(e) => setPaymentData(prev => ({
-                  ...prev,
-                  cardNumber: formatCardNumber(e.target.value)
-                }))}
-                maxLength={19}
-                required
-              />
-            </div>
+    const handleBackdropClick = (e) => {
+      if (e.target === e.currentTarget) {
+        handleCloseModal();
+      }
+    };
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiry">Expiry Date</Label>
-                <Input
-                  id="expiry"
-                  placeholder="MM/YY"
-                  value={paymentData.expiry}
-                  onChange={(e) => {
-                    const formatted = formatExpiry(e.target.value);
-                    setPaymentData(prev => ({
+    return (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        onClick={handleBackdropClick}
+      >
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-laundry-blue" />
+                <h2 className="text-lg font-semibold">Complete Subscription</h2>
+              </div>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-6">
+              Subscribe to {selectedPlan?.name} Plan for ₹{selectedPlan?.price}/month
+            </p>
+
+            {paymentSuccess ? (
+              <div className="text-center py-8">
+                <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-green-800 mb-2">Payment Successful!</h3>
+                <p className="text-green-600">Your {selectedPlan?.name} subscription is now active.</p>
+              </div>
+            ) : (
+              <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cardNumber">Card Number</Label>
+                  <Input
+                    id="cardNumber"
+                    placeholder="1234 5678 9012 3456"
+                    value={paymentData.cardNumber}
+                    onChange={(e) => setPaymentData(prev => ({
                       ...prev,
-                      expiry: formatted
-                    }));
-                  }}
-                  maxLength={5}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
-                <Input
-                  id="cvv"
-                  placeholder="123"
-                  value={paymentData.cvv}
-                  onChange={(e) => setPaymentData(prev => ({
-                    ...prev,
-                    cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
-                  }))}
-                  maxLength={4}
-                  required
-                />
-              </div>
-            </div>
+                      cardNumber: formatCardNumber(e.target.value)
+                    }))}
+                    maxLength={19}
+                    required
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cardHolder">Cardholder Name</Label>
-              <Input
-                id="cardHolder"
-                placeholder="John Doe"
-                value={paymentData.cardHolder}
-                onChange={(e) => setPaymentData(prev => ({
-                  ...prev,
-                  cardHolder: e.target.value
-                }))}
-                required
-              />
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      placeholder="MM/YY"
+                      value={paymentData.expiry}
+                      onChange={(e) => {
+                        const formatted = formatExpiry(e.target.value);
+                        setPaymentData(prev => ({
+                          ...prev,
+                          expiry: formatted
+                        }));
+                      }}
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cvv">CVV</Label>
+                    <Input
+                      id="cvv"
+                      placeholder="123"
+                      value={paymentData.cvv}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
+                      }))}
+                      maxLength={4}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="billingAddress">Billing Address</Label>
-              <Input
-                id="billingAddress"
-                placeholder="123 Main Street"
-                value={paymentData.billingAddress}
-                onChange={(e) => setPaymentData(prev => ({
-                  ...prev,
-                  billingAddress: e.target.value
-                }))}
-                required
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cardHolder">Cardholder Name</Label>
+                  <Input
+                    id="cardHolder"
+                    placeholder="John Doe"
+                    value={paymentData.cardHolder}
+                    onChange={(e) => setPaymentData(prev => ({
+                      ...prev,
+                      cardHolder: e.target.value
+                    }))}
+                    required
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  placeholder="Mumbai"
-                  value={paymentData.city}
-                  onChange={(e) => setPaymentData(prev => ({
-                    ...prev,
-                    city: e.target.value
-                  }))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code</Label>
-                <Input
-                  id="zipCode"
-                  placeholder="400001"
-                  value={paymentData.zipCode}
-                  onChange={(e) => setPaymentData(prev => ({
-                    ...prev,
-                    zipCode: e.target.value
-                  }))}
-                  required
-                />
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="billingAddress">Billing Address</Label>
+                  <Input
+                    id="billingAddress"
+                    placeholder="123 Main Street"
+                    value={paymentData.billingAddress}
+                    onChange={(e) => setPaymentData(prev => ({
+                      ...prev,
+                      billingAddress: e.target.value
+                    }))}
+                    required
+                  />
+                </div>
 
-            {paymentError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {paymentError}
-              </div>
-            )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      placeholder="Mumbai"
+                      value={paymentData.city}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        city: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      placeholder="400001"
+                      value={paymentData.zipCode}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        zipCode: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Plan:</span>
-                <span className="font-medium">{selectedPlan?.name}</span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Monthly:</span>
-                <span className="font-medium">₹{selectedPlan?.price}</span>
-              </div>
-              <div className="flex justify-between items-center border-t pt-2">
-                <span className="font-semibold">Total:</span>
-                <span className="font-bold text-laundry-blue">₹{selectedPlan?.price}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Lock className="h-4 w-4" />
-              <span>Your payment information is secure and encrypted</span>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowPaymentModal(false)}
-                className="flex-1"
-                disabled={isProcessing}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 btn-primary"
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Subscribe for ₹${selectedPlan?.price}`
+                {paymentError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {paymentError}
+                  </div>
                 )}
-              </Button>
-            </div>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Plan:</span>
+                    <span className="font-medium">{selectedPlan?.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Monthly:</span>
+                    <span className="font-medium">₹{selectedPlan?.price}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-2">
+                    <span className="font-semibold">Total:</span>
+                    <span className="font-bold text-laundry-blue">₹{selectedPlan?.price}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Lock className="h-4 w-4" />
+                  <span>Your payment information is secure and encrypted</span>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseModal}
+                    className="flex-1"
+                    disabled={isProcessing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 btn-primary"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Subscribe for ₹${selectedPlan?.price}`
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
