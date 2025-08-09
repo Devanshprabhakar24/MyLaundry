@@ -134,7 +134,7 @@ export default function NewOrder() {
     let total = 0;
     
     if (orderData.services.washFold.selected) {
-      total += orderData.services.washFold.weight * 700;
+      total += orderData.services.washFold.weight * 70;
     }
     
     if (orderData.services.dryClean.selected) {
