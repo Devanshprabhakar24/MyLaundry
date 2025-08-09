@@ -14,7 +14,7 @@ import {
   Star, 
   Package,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Clock,
   CheckCircle,
   Truck,
@@ -324,7 +324,7 @@ export default function MyOrders() {
                     <span>{new Date(order.estimatedDelivery).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-laundry-gray" />
+                    <IndianRupee className="h-4 w-4 text-laundry-gray" />
                     <span className="text-laundry-gray">Total:</span>
                     <span className="font-medium">₹{order.total}</span>
                   </div>

@@ -633,7 +633,7 @@ export default function Profile() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-laundry-blue">${loyaltyData.totalSpent}</div>
+                        <div className="text-2xl font-bold text-laundry-blue">₹{loyaltyData.totalSpent}</div>
                         <div className="text-sm text-laundry-gray">Total Spent</div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg text-center">
@@ -649,7 +649,7 @@ export default function Profile() {
                       <div className="border rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium">$5 Off Next Order</h4>
+                            <h4 className="font-medium">₹5 Off Next Order</h4>
                             <p className="text-sm text-laundry-gray">500 points</p>
                           </div>
                           <Button size="sm" className="btn-primary">Redeem</Button>
@@ -667,7 +667,7 @@ export default function Profile() {
                       <div className="border rounded-lg p-4 opacity-50">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium">$20 Off Order</h4>
+                            <h4 className="font-medium">₹20 Off Order</h4>
                             <p className="text-sm text-laundry-gray">2000 points</p>
                           </div>
                           <Button size="sm" disabled>Need More Points</Button>

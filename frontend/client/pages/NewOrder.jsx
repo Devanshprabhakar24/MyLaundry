@@ -511,7 +511,7 @@ export default function NewOrder() {
                       {orderData.services.washFold.selected && (
                         <div className="flex justify-between">
                           <span>Wash & Fold ({orderData.services.washFold.weight}kg)</span>
-                          <span>${(orderData.services.washFold.weight * 700).toFixed(2)}</span>
+                          <span>₹{(orderData.services.washFold.weight * 700).toFixed(2)}</span>
                         </div>
                       )}
                       

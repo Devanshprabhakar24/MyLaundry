@@ -10,7 +10,7 @@ import {
   Package,
   Users,
   Clock,
-  DollarSign,
+  IndianRupee,
   Search,
   Eye
 } from "lucide-react";
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-laundry-gray">Total Revenue</p>
                   <p className="text-2xl font-bold text-laundry-blue">₹{stats.totalRevenue.toFixed(2)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-laundry-blue" />
+                <IndianRupee className="h-8 w-8 text-laundry-blue" />
               </div>
             </CardContent>
           </Card>

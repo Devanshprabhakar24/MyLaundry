@@ -176,7 +176,7 @@ export default function TrackOrder() {
                     <Package className="h-4 w-4 text-laundry-gray" />
                     <div>
                       <div className="text-sm text-laundry-gray">Total</div>
-                      <div className="font-medium text-laundry-blue">${trackedOrder.total}</div>
+                      <div className="font-medium text-laundry-blue">₹{trackedOrder.total}</div>
                     </div>
                   </div>
                 </div>

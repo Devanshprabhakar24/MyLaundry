@@ -177,11 +177,11 @@ export default function Subscriptions() {
                   
                   <div className="pt-4">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-3xl font-bold text-laundry-blue">${plan.price}</span>
+                      <span className="text-3xl font-bold text-laundry-blue">₹{plan.price}</span>
                       <span className="text-laundry-gray">/month</span>
                     </div>
                     <div className="flex items-center justify-center gap-2 mt-1">
-                      <span className="text-sm text-laundry-gray line-through">${plan.originalPrice}</span>
+                      <span className="text-sm text-laundry-gray line-through">₹{plan.originalPrice}</span>
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         Save {plan.savings}%
                       </Badge>

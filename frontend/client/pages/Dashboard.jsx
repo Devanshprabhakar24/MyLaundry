@@ -204,7 +204,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-laundry-gray">Total:</span>
-                      <span className="font-bold text-laundry-blue">${activeOrder.total}</span>
+                      <span className="font-bold text-laundry-blue">₹{activeOrder.total}</span>
                     </div>
 
                     {/* Progress Indicator */}
@@ -249,7 +249,7 @@ export default function Dashboard() {
                         <div className="text-sm text-laundry-gray">{new Date(order.date).toLocaleDateString()}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-laundry-blue">${order.total}</div>
+                        <div className="font-bold text-laundry-blue">₹{order.total}</div>
                         <Badge className={getStatusColor(order.status)}>
                           {getStatusText(order.status)}
                         </Badge>
