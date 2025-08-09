@@ -30,8 +30,8 @@ export default function AdminDashboard() {
       setIsLoading(true);
       try {
         const [statsRes, ordersRes] = await Promise.all([
-          fetch('${API_URL}/api/admin/stats'),
-          fetch('${API_URL}/api/admin/orders')
+          fetch(`${API_URL}/api/admin/stats`),
+          fetch(`${API_URL}/api/admin/orders`)
         ]);
         const statsData = await statsRes.json();
         const ordersData = await ordersRes.json();

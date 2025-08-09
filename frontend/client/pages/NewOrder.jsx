@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
+import API_URL from '../apiConfig';
 import { 
   Calendar, 
   Clock, 
@@ -165,6 +166,13 @@ export default function NewOrder() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+
+    if (!user?._id) {
+      alert("Please login to place an order.");
+      navigate('/login');
+      setIsSubmitting(false);
+      return;
+    }
     
     const finalOrderData = {
       userId: user._id, // FIX: Use user._id for MongoDB
@@ -178,7 +186,7 @@ export default function NewOrder() {
       items: Object.entries(orderData.services)
         .filter(([, service]) => service.selected)
         .map(([key, service]) => {
-          if (key === 'washFold') return `{service.weight}kg Wash & Fold`;
+          if (key === 'washFold') return `${service.weight}kg Wash & Fold`;
           return Object.entries(service.items)
             .filter(([, qty]) => qty > 0)
             .map(([itemName, qty]) => `${qty} ${itemName}(s) (${key})`)
@@ -187,7 +195,7 @@ export default function NewOrder() {
     };
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +285,7 @@ export default function NewOrder() {
             {currentStep === 1 && (
               <div className="space-y-8">
                 {services.map((service) => (
-                  <Card key={service.id} className={`border-2 ₹{
+                  <Card key={service.id} className={`border-2 ${
                     orderData.services[service.id]?.selected 
                       ? 'border-laundry-blue bg-laundry-light-blue' 
                       : 'border-gray-200'
