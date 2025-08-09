@@ -24,9 +24,11 @@ import {
   Heart,
   Award
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Index() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [zipCode, setZipCode] = useState("");
   const [zipCodeResult, setZipCodeResult] = useState(null);
 
@@ -125,7 +127,7 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button 
                 className="btn-primary text-lg px-8 py-4"
-                onClick={() => navigate('/new-order')}
+                onClick={() => navigate(isAuthenticated ? '/new-order' : '/login')}
               >
                 Schedule a Pickup
               </Button>
@@ -348,7 +350,7 @@ export default function Index() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               className="bg-white text-laundry-blue hover:bg-gray-100 px-8 py-4 text-lg"
-              onClick={() => navigate('/new-order')}
+              onClick={() => navigate(isAuthenticated ? '/new-order' : '/login')}
             >
               Schedule Your First Pickup
             </Button>
