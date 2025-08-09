@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import API_URL from "../apiConfig";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,6 +24,7 @@ export default function Subscriptions() {
   });
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const plans = [
     { id: "basic", name: "Basic", price: 499, weightAllowance: "20kg", pickups: 4 },
@@ -34,6 +36,7 @@ export default function Subscriptions() {
     setSelectedPlan(plan);
     setPaymentError("");
     setPaymentSuccess(false);
+    setIsModalOpen(true);
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -145,79 +148,51 @@ export default function Subscriptions() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Choose a Plan</h1>
+    <div className="max-w-5xl mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Choose Your Subscription Plan</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => (
-          <Card
-            key={plan.id}
-            className={selectedPlan?.id === plan.id ? "border-blue-500" : ""}
-          >
+          <Card key={plan.id} className={`hover:shadow-lg transition ${selectedPlan?.id === plan.id ? "border-blue-500" : ""}`}>
             <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>₹{plan.price} / month</CardDescription>
+              <CardTitle className="text-xl">{plan.name}</CardTitle>
+              <CardDescription className="text-lg font-semibold">₹{plan.price} / month</CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Weight Allowance: {plan.weightAllowance}</p>
-              <p>Pickups: {plan.pickups}</p>
-              <Button
-                className="mt-4 w-full"
-                onClick={() => handlePlanSelect(plan)}
-              >
-                Select
-              </Button>
+              <ul className="text-sm space-y-1">
+                <li>Weight Allowance: {plan.weightAllowance}</li>
+                <li>Pickups: {plan.pickups}</li>
+              </ul>
+              <Button className="mt-4 w-full" onClick={() => handlePlanSelect(plan)}>Select Plan</Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {selectedPlan && (
-        <form onSubmit={handlePaymentSubmit} className="mt-8 space-y-4">
-          <h2 className="text-xl font-semibold">Enter Payment Details</h2>
-          <Input
-            placeholder="Card Number"
-            value={paymentData.cardNumber}
-            onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value })}
-          />
-          <Input
-            placeholder="Card Holder Name"
-            value={paymentData.cardHolder}
-            onChange={(e) => setPaymentData({ ...paymentData, cardHolder: e.target.value })}
-          />
-          <Input
-            placeholder="MM/YY"
-            value={paymentData.expiry}
-            onChange={(e) => setPaymentData({ ...paymentData, expiry: e.target.value })}
-          />
-          <Input
-            placeholder="CVV"
-            value={paymentData.cvv}
-            onChange={(e) => setPaymentData({ ...paymentData, cvv: e.target.value })}
-          />
-          <Input
-            placeholder="Billing Address"
-            value={paymentData.billingAddress}
-            onChange={(e) => setPaymentData({ ...paymentData, billingAddress: e.target.value })}
-          />
-          <Input
-            placeholder="City"
-            value={paymentData.city}
-            onChange={(e) => setPaymentData({ ...paymentData, city: e.target.value })}
-          />
-          <Input
-            placeholder="ZIP Code"
-            value={paymentData.zipCode}
-            onChange={(e) => setPaymentData({ ...paymentData, zipCode: e.target.value })}
-          />
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Payment Details</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handlePaymentSubmit} className="space-y-4">
+            <Input placeholder="Card Number" value={paymentData.cardNumber} onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value })} />
+            <Input placeholder="Card Holder Name" value={paymentData.cardHolder} onChange={(e) => setPaymentData({ ...paymentData, cardHolder: e.target.value })} />
+            <Input placeholder="MM/YY" value={paymentData.expiry} onChange={(e) => setPaymentData({ ...paymentData, expiry: e.target.value })} />
+            <Input placeholder="CVV" value={paymentData.cvv} onChange={(e) => setPaymentData({ ...paymentData, cvv: e.target.value })} />
+            <Input placeholder="Billing Address" value={paymentData.billingAddress} onChange={(e) => setPaymentData({ ...paymentData, billingAddress: e.target.value })} />
+            <Input placeholder="City" value={paymentData.city} onChange={(e) => setPaymentData({ ...paymentData, city: e.target.value })} />
+            <Input placeholder="ZIP Code" value={paymentData.zipCode} onChange={(e) => setPaymentData({ ...paymentData, zipCode: e.target.value })} />
 
-          {paymentError && <p className="text-red-500">{paymentError}</p>}
-          {paymentSuccess && <p className="text-green-500">Payment Successful! Redirecting...</p>}
+            {paymentError && <p className="text-red-500 text-sm">{paymentError}</p>}
+            {paymentSuccess && <p className="text-green-500 text-sm">Payment Successful! Redirecting...</p>}
 
-          <Button type="submit" disabled={isProcessing}>
-            {isProcessing ? "Processing..." : `Pay ₹${selectedPlan.price}`}
-          </Button>
-        </form>
-      )}
+            <DialogFooter>
+              <Button type="submit" disabled={isProcessing}>
+                {isProcessing ? "Processing..." : `Pay ₹${selectedPlan?.price || 0}`}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
