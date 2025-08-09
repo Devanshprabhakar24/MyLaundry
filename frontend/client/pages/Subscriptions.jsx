@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "../context/AuthContext";
 import { 
   CheckCircle, 
   Star, 
@@ -12,12 +17,38 @@ import {
   Package,
   Crown,
   Users,
-  Home
+  Home,
+  CreditCard,
+  Lock,
+  Check,
+  X,
+  Loader2
 } from "lucide-react";
+import API_URL from '../apiConfig';
 
 export default function Subscriptions() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+    billingAddress: "",
+    city: "",
+    zipCode: ""
+  });
+
   const plans = [
     {
+      id: "basic",
       name: "Basic",
       icon: <Home className="h-8 w-8" />,
       price: 29.99,
@@ -39,6 +70,7 @@ export default function Subscriptions() {
       buttonStyle: "btn-secondary"
     },
     {
+      id: "family",
       name: "Family",
       icon: <Users className="h-8 w-8" />,
       price: 49.99,
@@ -63,6 +95,7 @@ export default function Subscriptions() {
       popular: true
     },
     {
+      id: "premium",
       name: "Premium",
       icon: <Crown className="h-8 w-8" />,
       price: 79.99,
@@ -131,6 +164,305 @@ export default function Subscriptions() {
       comment: "Great value for money! The Basic plan covers all my needs as a single professional, and the quality is consistently excellent."
     }
   ];
+
+  const handlePlanSelect = (plan) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setSelectedPlan(plan);
+    setShowPaymentModal(true);
+    setPaymentError("");
+    setPaymentSuccess(false);
+  };
+
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setPaymentError("");
+
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    try {
+      // Fake payment gateway simulation
+      const paymentResult = await simulatePayment(paymentData);
+      
+      if (paymentResult.success) {
+        // Create subscription in backend
+        const subscriptionData = {
+          userId: user._id,
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+          price: selectedPlan.price,
+          status: 'active',
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          weightAllowance: selectedPlan.weightAllowance,
+          pickupsAllowed: selectedPlan.pickups
+        };
+
+        const response = await fetch(`${API_URL}/api/subscriptions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(subscriptionData),
+        });
+
+        if (response.ok) {
+          setPaymentSuccess(true);
+          setTimeout(() => {
+            setShowPaymentModal(false);
+            navigate('/dashboard');
+          }, 2000);
+        } else {
+          setPaymentError("Failed to create subscription. Please try again.");
+        }
+      } else {
+        setPaymentError(paymentResult.message || "Payment failed. Please check your card details.");
+      }
+    } catch (error) {
+      setPaymentError("An error occurred during payment processing.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const simulatePayment = async (paymentData) => {
+    // Simulate various payment scenarios
+    const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
+    
+    // Test card numbers for different scenarios
+    if (cardNumber === '4000000000000002') {
+      return { success: false, message: "Card declined. Please try a different card." };
+    }
+    
+    if (cardNumber === '4000000000009995') {
+      return { success: false, message: "Insufficient funds." };
+    }
+    
+    if (cardNumber === '4000000000009987') {
+      return { success: false, message: "Card expired." };
+    }
+    
+    // Valid test card
+    if (cardNumber.length === 16 && cardNumber.startsWith('4')) {
+      return { success: true, transactionId: 'txn_' + Math.random().toString(36).substr(2, 9) };
+    }
+    
+    return { success: false, message: "Invalid card number." };
+  };
+
+  const formatCardNumber = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiry = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const PaymentModal = () => (
+    <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-laundry-blue" />
+            Complete Subscription
+          </DialogTitle>
+          <DialogDescription>
+            Subscribe to {selectedPlan?.name} Plan for ₹{selectedPlan?.price}/month
+          </DialogDescription>
+        </DialogHeader>
+
+        {paymentSuccess ? (
+          <div className="text-center py-8">
+            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-green-800 mb-2">Payment Successful!</h3>
+            <p className="text-green-600">Your {selectedPlan?.name} subscription is now active.</p>
+          </div>
+        ) : (
+          <form onSubmit={handlePaymentSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cardNumber">Card Number</Label>
+              <Input
+                id="cardNumber"
+                placeholder="1234 5678 9012 3456"
+                value={paymentData.cardNumber}
+                onChange={(e) => setPaymentData(prev => ({
+                  ...prev,
+                  cardNumber: formatCardNumber(e.target.value)
+                }))}
+                maxLength={19}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="expiry">Expiry Date</Label>
+                <Input
+                  id="expiry"
+                  placeholder="MM/YY"
+                  value={paymentData.expiryMonth + paymentData.expiryYear}
+                  onChange={(e) => {
+                    const formatted = formatExpiry(e.target.value);
+                    setPaymentData(prev => ({
+                      ...prev,
+                      expiryMonth: formatted.substring(0, 2),
+                      expiryYear: formatted.substring(3, 5)
+                    }));
+                  }}
+                  maxLength={5}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cvv">CVV</Label>
+                <Input
+                  id="cvv"
+                  placeholder="123"
+                  value={paymentData.cvv}
+                  onChange={(e) => setPaymentData(prev => ({
+                    ...prev,
+                    cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
+                  }))}
+                  maxLength={4}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cardHolder">Cardholder Name</Label>
+              <Input
+                id="cardHolder"
+                placeholder="John Doe"
+                value={paymentData.cardHolder}
+                onChange={(e) => setPaymentData(prev => ({
+                  ...prev,
+                  cardHolder: e.target.value
+                }))}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="billingAddress">Billing Address</Label>
+              <Input
+                id="billingAddress"
+                placeholder="123 Main Street"
+                value={paymentData.billingAddress}
+                onChange={(e) => setPaymentData(prev => ({
+                  ...prev,
+                  billingAddress: e.target.value
+                }))}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  placeholder="Mumbai"
+                  value={paymentData.city}
+                  onChange={(e) => setPaymentData(prev => ({
+                    ...prev,
+                    city: e.target.value
+                  }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zipCode">ZIP Code</Label>
+                <Input
+                  id="zipCode"
+                  placeholder="400001"
+                  value={paymentData.zipCode}
+                  onChange={(e) => setPaymentData(prev => ({
+                    ...prev,
+                    zipCode: e.target.value
+                  }))}
+                  required
+                />
+              </div>
+            </div>
+
+            {paymentError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {paymentError}
+              </div>
+            )}
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">Plan:</span>
+                <span className="font-medium">{selectedPlan?.name}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">Monthly:</span>
+                <span className="font-medium">₹{selectedPlan?.price}</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-2">
+                <span className="font-semibold">Total:</span>
+                <span className="font-bold text-laundry-blue">₹{selectedPlan?.price}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Lock className="h-4 w-4" />
+              <span>Your payment information is secure and encrypted</span>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1"
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 btn-primary"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Subscribe for ₹${selectedPlan?.price}`
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -210,7 +542,10 @@ export default function Subscriptions() {
                     ))}
                   </ul>
 
-                  <Button className={`w-full ${plan.buttonStyle}`}>
+                  <Button 
+                    className={`w-full ${plan.buttonStyle}`}
+                    onClick={() => handlePlanSelect(plan)}
+                  >
                     {plan.popular ? "Start Free Trial" : "Choose Plan"}
                   </Button>
                 </CardContent>
@@ -360,7 +695,10 @@ export default function Subscriptions() {
             Start your free trial today and experience the convenience of membership
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-white text-laundry-blue hover:bg-gray-100 px-8 py-3 text-lg">
+            <Button 
+              className="bg-white text-laundry-blue hover:bg-gray-100 px-8 py-3 text-lg"
+              onClick={() => handlePlanSelect(plans[1])} // Default to Family plan
+            >
               Start Free Trial
             </Button>
             <Button variant="outline" className="border-white text-white hover:bg-white hover:text-laundry-blue px-8 py-3 text-lg">
@@ -372,6 +710,9 @@ export default function Subscriptions() {
           </p>
         </div>
       </section>
+
+      {/* Payment Modal */}
+      <PaymentModal />
     </div>
   );
 }

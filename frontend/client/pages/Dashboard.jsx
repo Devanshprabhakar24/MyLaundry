@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
-import {
+import { 
   Package,
   Clock,
   CheckCircle,
@@ -16,7 +16,8 @@ import {
   Star,
   Calendar,
   Phone,
-  MapPin
+  MapPin,
+  Crown
 } from "lucide-react";
 import API_URL from '../apiConfig'; // Add this line
 export default function Dashboard() {
@@ -117,6 +118,13 @@ export default function Dashboard() {
       icon: <Package className="h-6 w-6" />,
       link: "/my-orders",
       color: "bg-purple-600"
+    },
+    {
+      title: "Subscription",
+      description: "Manage subscription",
+      icon: <Crown className="h-6 w-6" />,
+      link: "/subscription-management",
+      color: "bg-orange-600"
     }
   ];
 

@@ -25,6 +25,7 @@ import TrackOrder from "./pages/TrackOrder.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
 import Profile from "./pages/Profile.jsx";
 import Help from "./pages/Help.jsx";
+import SubscriptionManagement from "./pages/SubscriptionManagement.jsx";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/my-orders" element={<Layout><MyOrders /></Layout>} />
             <Route path="/MyOrders" element={<Layout><MyOrders /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
+            <Route path="/subscription-management" element={<Layout><SubscriptionManagement /></Layout>} />
 
             {/* Public Pages */}
             <Route path="/help" element={<Layout><Help /></Layout>} />

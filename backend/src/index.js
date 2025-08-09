@@ -8,6 +8,7 @@ import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import garmentRoutes from './routes/garments.js';
+import subscriptionRoutes from './routes/subscriptions.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/garments', garmentRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Health check route for Render
 app.get("/", (req, res) => {
