@@ -42,7 +42,7 @@ export default function Services() {
   });
 
   const pricing = {
-    washFold: 35, // per kg in rupees
+    washFold: 70, // per kg in rupees
     dryClean: {
       shirt: 99,
       trousers: 149,
