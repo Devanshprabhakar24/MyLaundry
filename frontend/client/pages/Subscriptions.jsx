@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../context/AuthContext";
-import {
-  CheckCircle,
-  Star,
-  Truck,
-  Shield,
+import { 
+  CheckCircle, 
+  Star, 
+  Truck, 
+  Shield, 
   Clock,
   Package,
   Crown,
@@ -192,74 +192,58 @@ export default function Subscriptions() {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-
-    // Basic guard: selectedPlan & user must exist
-    if (!selectedPlan) {
-      setPaymentError("No plan selected.");
-      return;
-    }
-    if (!isAuthenticated || !user) {
-      setPaymentError("You must be logged in to subscribe.");
-      return;
-    }
-
     setIsProcessing(true);
     setPaymentError("");
 
     // Validate required fields
-    const { cardNumber, cardHolder, expiry, cvv, billingAddress, city, zipCode } = paymentData;
-    if (!cardNumber || !cardHolder || !expiry || !cvv || !billingAddress || !city || !zipCode) {
+    if (!paymentData.cardNumber || !paymentData.cardHolder || !paymentData.expiry || !paymentData.cvv || !paymentData.billingAddress || !paymentData.city || !paymentData.zipCode) {
       setPaymentError("Please fill in all required fields.");
       setIsProcessing(false);
       return;
     }
 
-    // Validate card number length (digits only)
-    const digitsOnlyCard = cardNumber.replace(/\s/g, '');
-    if (!/^\d{16}$/.test(digitsOnlyCard)) {
+    // Validate card number length
+    const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
+    if (cardNumber.length !== 16) {
       setPaymentError("Please enter a valid 16-digit card number.");
       setIsProcessing(false);
       return;
     }
 
-    // Validate expiry date format MM/YY and reasonable month
-    const expiryParts = expiry.split('/');
+    // Validate expiry date
+    const expiryParts = paymentData.expiry.split('/');
     if (expiryParts.length !== 2 || expiryParts[0].length !== 2 || expiryParts[1].length !== 2) {
       setPaymentError("Please enter a valid expiry date (MM/YY).");
       setIsProcessing(false);
       return;
     }
-    const month = parseInt(expiryParts[0], 10);
-    if (isNaN(month) || month < 1 || month > 12) {
-      setPaymentError("Please enter a valid expiry month (01-12).");
-      setIsProcessing(false);
-      return;
-    }
 
-    // Validate CVV (3 or 4 digits)
-    if (!/^\d{3,4}$/.test(cvv)) {
+    // Validate CVV
+    if (paymentData.cvv.length < 3) {
       setPaymentError("Please enter a valid CVV.");
       setIsProcessing(false);
       return;
     }
 
-    // Simulate a little processing time for UI feedback
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
-      // Debug
-      // console.log('Payment Data:', paymentData);
-
+      // Debug: Log payment data
+      console.log('Payment Data:', paymentData);
+      
       // Fake payment gateway simulation
       const paymentResult = await simulatePayment(paymentData);
-
+      
       if (paymentResult.success) {
-        // Extract expiry month and year
-        const [expiryMonth, expiryYear] = expiry.split('/');
+        // Extract expiry month and year from formatted string
+        const expiryParts = paymentData.expiry.split('/');
+        const expiryMonth = expiryParts[0] || '';
+        const expiryYear = expiryParts[1] || '';
 
-        // Create subscription payload
+        // Create subscription in backend
         const subscriptionData = {
-          userId: user?._id || null,
+          userId: user._id,
           planId: selectedPlan.id,
           planName: selectedPlan.name,
           price: selectedPlan.price,
@@ -269,44 +253,32 @@ export default function Subscriptions() {
           weightAllowance: selectedPlan.weightAllowance,
           pickupsAllowed: selectedPlan.pickups,
           paymentMethod: {
-            cardLast4: digitsOnlyCard.slice(-4),
-            cardBrand: digitsOnlyCard.startsWith('4') ? 'Visa' : 'Card',
-            expiryMonth,
-            expiryYear
+            cardLast4: paymentData.cardNumber.replace(/\s/g, '').slice(-4),
+            cardBrand: 'Visa', // Default for demo
+            expiryMonth: expiryMonth,
+            expiryYear: expiryYear
           },
           billingAddress: {
-            address: billingAddress,
-            city,
-            zipCode
+            address: paymentData.billingAddress,
+            city: paymentData.city,
+            zipCode: paymentData.zipCode
           }
         };
 
-        // Only attempt backend call if API_URL is defined
-        let created = true;
-        if (API_URL && API_URL.length > 0) {
-          const response = await fetch(`${API_URL}/api/subscriptions`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(subscriptionData),
-          });
+        const response = await fetch(`${API_URL}/api/subscriptions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(subscriptionData),
+        });
 
-          if (!response.ok) {
-            created = false;
-          }
-        } else {
-          // If no API configured, treat as created (dev mode)
-          created = true;
-        }
-
-        if (created) {
+        if (response.ok) {
           setPaymentSuccess(true);
-          // small delay to show success state then navigate
           setTimeout(() => {
             handleCloseModal();
             navigate('/dashboard');
-          }, 1500);
+          }, 2000);
         } else {
           setPaymentError("Failed to create subscription. Please try again.");
         }
@@ -314,7 +286,6 @@ export default function Subscriptions() {
         setPaymentError(paymentResult.message || "Payment failed. Please check your card details.");
       }
     } catch (error) {
-      console.error(error);
       setPaymentError("An error occurred during payment processing.");
     } finally {
       setIsProcessing(false);
@@ -322,59 +293,74 @@ export default function Subscriptions() {
   };
 
   const simulatePayment = async (paymentData) => {
+    // Simulate various payment scenarios
     const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
-
-    // Test error scenarios with special test numbers
+    
+    // Test card numbers for different scenarios
     if (cardNumber === '4000000000000002') {
       return { success: false, message: "Card declined. Please try a different card." };
     }
+    
     if (cardNumber === '4000000000009995') {
       return { success: false, message: "Insufficient funds." };
     }
+    
     if (cardNumber === '4000000000009987') {
       return { success: false, message: "Card expired." };
     }
-
-    // Accept 16-digit numbers starting with 4 as "valid" test Visa
+    
+    // Valid test card
     if (cardNumber.length === 16 && cardNumber.startsWith('4')) {
       return { success: true, transactionId: 'txn_' + Math.random().toString(36).substr(2, 9) };
     }
-
+    
     return { success: false, message: "Invalid card number." };
   };
 
   const formatCardNumber = (value) => {
+    // Remove all non-digits and spaces
     const v = value.replace(/\D/g, '');
+    
+    // Format as groups of 4 digits
     const parts = [];
     for (let i = 0; i < v.length && i < 16; i += 4) {
       parts.push(v.substring(i, i + 4));
     }
+    
     return parts.join(' ');
   };
 
   const formatExpiry = (value) => {
+    // Remove all non-digits
     const v = value.replace(/\D/g, '');
-    if (v.length === 0) return "";
-    if (v.length <= 2) return v;
-    const month = v.substring(0, 2);
-    const year = v.substring(2, 4);
-    return `${month}${year ? '/' + year : ''}`;
+    
+    // Format as MM/YY
+    if (v.length >= 2) {
+      const month = v.substring(0, 2);
+      const year = v.substring(2, 4);
+      return month + '/' + year;
+    }
+    
+    return v;
   };
 
   const PaymentModal = () => {
     if (!showPaymentModal) return null;
 
     const handleBackdropClick = (e) => {
-      if (e.target === e.currentTarget) handleCloseModal();
+      if (e.target === e.currentTarget) {
+        handleCloseModal();
+      }
     };
 
     return (
-      <div
+      <div 
         className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
         onClick={handleBackdropClick}
       >
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="p-6">
+            {/* Header with gradient */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="bg-gradient-to-r from-laundry-blue to-blue-600 p-2 rounded-lg">
@@ -385,24 +371,23 @@ export default function Subscriptions() {
                   <p className="text-sm text-gray-500">Secure payment processing</p>
                 </div>
               </div>
-
               <button
                 onClick={handleCloseModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                aria-label="Close payment modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-
+            
+            {/* Plan Summary */}
             <div className="bg-gradient-to-r from-laundry-light-blue to-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{selectedPlan?.name ?? "Plan"} Plan</h3>
+                  <h3 className="font-semibold text-gray-900">{selectedPlan?.name} Plan</h3>
                   <p className="text-sm text-gray-600">Monthly subscription</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-laundry-blue">₹{selectedPlan ? selectedPlan.price.toFixed(2) : "--"}</div>
+                  <div className="text-2xl font-bold text-laundry-blue">₹{selectedPlan?.price}</div>
                   <div className="text-xs text-gray-500">per month</div>
                 </div>
               </div>
@@ -415,7 +400,7 @@ export default function Subscriptions() {
                 </div>
                 <h3 className="text-2xl font-bold text-green-800 mb-3">Payment Successful!</h3>
                 <p className="text-green-600 mb-6">Your {selectedPlan?.name} subscription is now active.</p>
-
+                
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -423,23 +408,24 @@ export default function Subscriptions() {
                   </div>
                   <div className="text-sm text-green-700">
                     <p>Plan: {selectedPlan?.name}</p>
-                    <p>Amount: ₹{selectedPlan?.price.toFixed(2)}/month</p>
+                    <p>Amount: ₹{selectedPlan?.price}/month</p>
                     <p>Status: Active</p>
                   </div>
                 </div>
-
+                
                 <p className="text-sm text-gray-600">
                   Redirecting to dashboard in a few seconds...
                 </p>
               </div>
             ) : (
               <form onSubmit={handlePaymentSubmit} className="space-y-5">
+                {/* Payment Information Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 bg-laundry-blue rounded-full"></div>
                     <h3 className="font-semibold text-gray-900">Payment Information</h3>
                   </div>
-
+                  
                   <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="cardNumber" className="text-sm font-medium text-gray-700">Card Number</Label>
@@ -447,7 +433,10 @@ export default function Subscriptions() {
                         id="cardNumber"
                         placeholder="1234 5678 9012 3456"
                         value={paymentData.cardNumber}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardNumber: formatCardNumber(e.target.value) }))}
+                        onChange={(e) => setPaymentData(prev => ({
+                          ...prev,
+                          cardNumber: formatCardNumber(e.target.value)
+                        }))}
                         maxLength={19}
                         required
                         className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
@@ -461,7 +450,13 @@ export default function Subscriptions() {
                           id="expiry"
                           placeholder="MM/YY"
                           value={paymentData.expiry}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, expiry: formatExpiry(e.target.value) }))}
+                          onChange={(e) => {
+                            const formatted = formatExpiry(e.target.value);
+                            setPaymentData(prev => ({
+                              ...prev,
+                              expiry: formatted
+                            }));
+                          }}
                           maxLength={5}
                           required
                           className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
@@ -473,7 +468,10 @@ export default function Subscriptions() {
                           id="cvv"
                           placeholder="123"
                           value={paymentData.cvv}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, '').substring(0, 4) }))}
+                          onChange={(e) => setPaymentData(prev => ({
+                            ...prev,
+                            cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
+                          }))}
                           maxLength={4}
                           required
                           className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
@@ -487,7 +485,10 @@ export default function Subscriptions() {
                         id="cardHolder"
                         placeholder="John Doe"
                         value={paymentData.cardHolder}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, cardHolder: e.target.value }))}
+                        onChange={(e) => setPaymentData(prev => ({
+                          ...prev,
+                          cardHolder: e.target.value
+                        }))}
                         required
                         className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
                       />
@@ -495,12 +496,13 @@ export default function Subscriptions() {
                   </div>
                 </div>
 
+                {/* Billing Information Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <h3 className="font-semibold text-gray-900">Billing Information</h3>
                   </div>
-
+                  
                   <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="billingAddress" className="text-sm font-medium text-gray-700">Billing Address</Label>
@@ -508,7 +510,10 @@ export default function Subscriptions() {
                         id="billingAddress"
                         placeholder="123 Main Street"
                         value={paymentData.billingAddress}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, billingAddress: e.target.value }))}
+                        onChange={(e) => setPaymentData(prev => ({
+                          ...prev,
+                          billingAddress: e.target.value
+                        }))}
                         required
                         className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
                       />
@@ -521,7 +526,10 @@ export default function Subscriptions() {
                           id="city"
                           placeholder="Mumbai"
                           value={paymentData.city}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, city: e.target.value }))}
+                          onChange={(e) => setPaymentData(prev => ({
+                            ...prev,
+                            city: e.target.value
+                          }))}
                           required
                           className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
                         />
@@ -532,12 +540,106 @@ export default function Subscriptions() {
                           id="zipCode"
                           placeholder="400001"
                           value={paymentData.zipCode}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, zipCode: e.target.value }))}
+                          onChange={(e) => setPaymentData(prev => ({
+                            ...prev,
+                            zipCode: e.target.value
+                          }))}
                           required
                           className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      placeholder="MM/YY"
+                      value={paymentData.expiry}
+                      onChange={(e) => {
+                        const formatted = formatExpiry(e.target.value);
+                        setPaymentData(prev => ({
+                          ...prev,
+                          expiry: formatted
+                        }));
+                      }}
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cvv">CVV</Label>
+                    <Input
+                      id="cvv"
+                      placeholder="123"
+                      value={paymentData.cvv}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
+                      }))}
+                      maxLength={4}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cardHolder">Cardholder Name</Label>
+                  <Input
+                    id="cardHolder"
+                    placeholder="John Doe"
+                    value={paymentData.cardHolder}
+                    onChange={(e) => setPaymentData(prev => ({
+                      ...prev,
+                      cardHolder: e.target.value
+                    }))}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="billingAddress">Billing Address</Label>
+                  <Input
+                    id="billingAddress"
+                    placeholder="123 Main Street"
+                    value={paymentData.billingAddress}
+                    onChange={(e) => setPaymentData(prev => ({
+                      ...prev,
+                      billingAddress: e.target.value
+                    }))}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      placeholder="Mumbai"
+                      value={paymentData.city}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        city: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      placeholder="400001"
+                      value={paymentData.zipCode}
+                      onChange={(e) => setPaymentData(prev => ({
+                        ...prev,
+                        zipCode: e.target.value
+                      }))}
+                      required
+                    />
                   </div>
                 </div>
 
@@ -551,6 +653,7 @@ export default function Subscriptions() {
                   </div>
                 )}
 
+                {/* Security Notice */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <div className="bg-blue-100 p-1 rounded-full">
@@ -565,6 +668,7 @@ export default function Subscriptions() {
                   </div>
                 </div>
 
+                {/* Action Buttons */}
                 <div className="flex gap-3 pt-2">
                   <Button
                     type="button"
@@ -588,12 +692,13 @@ export default function Subscriptions() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <CreditCard className="h-4 w-4" />
-                        <span>Subscribe for ₹{selectedPlan ? selectedPlan.price.toFixed(2) : "--"}</span>
+                        <span>Subscribe for ₹{selectedPlan?.price}</span>
                       </div>
                     )}
                   </Button>
                 </div>
 
+                {/* Terms */}
                 <p className="text-xs text-gray-500 text-center">
                   By subscribing, you agree to our Terms of Service and Privacy Policy
                 </p>
@@ -612,7 +717,7 @@ export default function Subscriptions() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl font-bold text-laundry-dark mb-6">Laundry Club Membership</h1>
           <p className="text-xl text-laundry-gray max-w-3xl mx-auto mb-8">
-            Join thousands of satisfied members and save up to 30% on all your laundry needs.
+            Join thousands of satisfied members and save up to 30% on all your laundry needs. 
             More convenience, better prices, premium service.
           </p>
           <Badge className="bg-laundry-blue text-white px-4 py-2 text-lg">
@@ -630,8 +735,8 @@ export default function Subscriptions() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {plans.map((plan) => (
-              <Card key={plan.id} className={`relative ${plan.color} ${plan.popular ? 'ring-2 ring-laundry-blue scale-105' : ''} transition-transform hover:scale-105`}>
+            {plans.map((plan, index) => (
+              <Card key={plan.name} className={`relative ${plan.color} ${plan.popular ? 'ring-2 ring-laundry-blue scale-105' : ''} transition-transform hover:scale-105`}>
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <Badge className="bg-laundry-blue text-white px-4 py-1">
@@ -640,14 +745,14 @@ export default function Subscriptions() {
                     </Badge>
                   </div>
                 )}
-
+                
                 <CardHeader className="text-center">
                   <div className={`${plan.textColor} mx-auto mb-4`}>
                     {plan.icon}
                   </div>
                   <CardTitle className={`text-2xl ${plan.textColor}`}>{plan.name}</CardTitle>
                   <CardDescription className={plan.textColor}>{plan.description}</CardDescription>
-
+                  
                   <div className="pt-4">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-3xl font-bold text-laundry-blue">₹{plan.price}</span>
@@ -683,7 +788,7 @@ export default function Subscriptions() {
                     ))}
                   </ul>
 
-                  <Button
+                  <Button 
                     className={`w-full ${plan.buttonStyle}`}
                     onClick={() => handlePlanSelect(plan)}
                   >
@@ -836,7 +941,7 @@ export default function Subscriptions() {
             Start your free trial today and experience the convenience of membership
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
+            <Button 
               className="bg-white text-laundry-blue hover:bg-gray-100 px-8 py-3 text-lg"
               onClick={() => handlePlanSelect(plans[1])} // Default to Family plan
             >
