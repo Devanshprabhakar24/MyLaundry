@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   CheckCircle,
   Star,
@@ -22,7 +22,7 @@ import {
   X,
   Loader2
 } from "lucide-react";
-import API_URL from '../apiConfig';
+import API_URL from '@/apiConfig';
 
 export default function Subscriptions() {
   const navigate = useNavigate();
@@ -183,6 +183,7 @@ export default function Subscriptions() {
       zipCode: ""
     });
   };
+  
 
   const handleCloseModal = () => {
     setShowPaymentModal(false);
@@ -231,7 +232,7 @@ export default function Subscriptions() {
     e.preventDefault();
     setIsProcessing(true);
     setPaymentError("");
-     // Add a guard to ensure user and user._id are available
+      // Add a guard to ensure user and user._id are available
     if (!user || !user._id) {
       setPaymentError("Your session has expired. Please log out and log back in.");
       setIsProcessing(false);
@@ -323,7 +324,10 @@ export default function Subscriptions() {
             navigate('/dashboard');
           }, 1500);
         } else {
-          setPaymentError("Failed to create subscription. Please try again.");
+          // **FIXED ERROR HANDLING**
+          // Try to parse the error message from the backend for more specific feedback.
+          const errorData = await response.json();
+          setPaymentError(errorData.message || "Failed to create subscription. Please try again.");
         }
       } else {
         setPaymentError(paymentResult.message || "Payment failed. Please check your card details.");
@@ -644,11 +648,7 @@ export default function Subscriptions() {
         </div>
       </section>
 
-      {/* Payment Modal (single set of inputs, formatted on blur) */}
-      {/*
-        Modal remains mounted only when showPaymentModal === true.
-        Inputs are controlled and sanitized on change to avoid cursor jump/focus loss.
-      */}
+      {/* Payment Modal */}
       {showPaymentModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
