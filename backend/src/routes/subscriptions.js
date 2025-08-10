@@ -1,25 +1,35 @@
-const express = require('express');
-const router = express.Router();
-const Subscription = require('../models/Subscription');
-const User = require('../models/User');
+import { Router } from 'express';
+import Subscription from '../models/Subscription.js';
+import User from '../models/User.js';
 
-// GET /api/subscriptions/user/:userId/active - Get active subscription for a user
-router.get('/user/:userId/active', async (req, res) => {
+const router = Router();
+
+// Get all subscriptions for a user
+router.get('/user/:userId', async (req, res) => {
     try {
-        const { userId } = req.params;
-        const subscription = await Subscription.findOne({ userId, status: 'active' });
-        if (!subscription) {
-            return res.status(404).json({ message: 'No active subscription found' });
-        }
-        res.json(subscription);
+        const subscriptions = await Subscription.find({ userId: req.params.userId })
+            .sort({ createdAt: -1 });
+        res.json(subscriptions);
     } catch (error) {
-        console.error('Error fetching active subscription:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while fetching subscriptions' });
     }
 });
 
+// Get active subscription for a user
+router.get('/user/:userId/active', async (req, res) => {
+    try {
+        const subscription = await Subscription.findOne({
+            userId: req.params.userId,
+            status: 'active',
+            endDate: { $gte: new Date() }
+        });
+        res.json(subscription);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while fetching active subscription' });
+    }
+});
 
-// POST /api/subscriptions - Create or Update a subscription
+// Create a new subscription
 router.post('/', async (req, res) => {
     try {
         const {
@@ -30,82 +40,160 @@ router.post('/', async (req, res) => {
             weightAllowance,
             pickupsAllowed,
             paymentMethod,
-            billingAddress,
+            billingAddress
         } = req.body;
 
-        // 1. Validate user exists
+        // Check if user exists
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // 2. Find existing subscription for the user, regardless of status (Upsert logic)
-        let subscription = await Subscription.findOne({ userId });
+        // Cancel any existing active subscriptions
+        await Subscription.updateMany(
+            { userId, status: 'active' },
+            { status: 'cancelled' }
+        );
 
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        // Create new subscription
+        const newSubscription = new Subscription({
+            userId,
+            planId,
+            planName,
+            price,
+            status: 'active',
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            weightAllowance,
+            pickupsAllowed,
+            paymentMethod,
+            billingAddress
+        });
 
-        if (subscription) {
-            // If subscription exists, update it to reactivate or change the plan
-            subscription.planId = planId;
-            subscription.planName = planName;
-            subscription.price = price;
-            subscription.status = 'active';
-            subscription.startDate = new Date();
-            subscription.endDate = thirtyDaysFromNow;
-            subscription.weightAllowance = weightAllowance;
-            subscription.pickupsAllowed = pickupsAllowed;
-            subscription.weightUsed = 0; // Reset usage
-            subscription.pickupsUsed = 0; // Reset usage
-            subscription.paymentMethod = paymentMethod;
-            subscription.billingAddress = billingAddress;
-        } else {
-            // If no subscription exists, create a new one
-            subscription = new Subscription({
-                userId,
-                planId,
-                planName,
-                price,
-                status: 'active',
-                startDate: new Date(),
-                endDate: thirtyDaysFromNow,
-                weightAllowance,
-                pickupsAllowed,
-                paymentMethod,
-                billingAddress,
-            });
-        }
-
-        const savedSubscription = await subscription.save();
-
-        // 4. Update user's subscription reference in the User model
-        user.subscription = savedSubscription._id;
-        await user.save();
-
-        res.status(201).json(savedSubscription);
+        await newSubscription.save();
+        res.status(201).json(newSubscription);
     } catch (error) {
-        console.error('Error creating/updating subscription:', error);
-        // Provide a more specific error message if possible, otherwise a generic one
-        res.status(500).json({ message: error.message || 'Server error while processing subscription' });
+        console.error('Subscription creation error:', error);
+        res.status(500).json({ message: 'Server error while creating subscription' });
     }
 });
 
-
-// PUT /api/subscriptions/:id/cancel - Cancel a subscription
-router.put('/:id/cancel', async (req, res) => {
+// Update subscription status
+router.put('/:subscriptionId', async (req, res) => {
     try {
-        const subscription = await Subscription.findById(req.params.id);
+        const { status, autoRenew } = req.body;
+        const updateData = {};
+
+        if (status) updateData.status = status;
+        if (autoRenew !== undefined) updateData.autoRenew = autoRenew;
+
+        const updatedSubscription = await Subscription.findByIdAndUpdate(
+            req.params.subscriptionId,
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedSubscription) {
+            return res.status(404).json({ message: 'Subscription not found' });
+        }
+
+        res.json(updatedSubscription);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while updating subscription' });
+    }
+});
+
+// Cancel subscription
+router.put('/:subscriptionId/cancel', async (req, res) => {
+    try {
+        const subscription = await Subscription.findByIdAndUpdate(
+            req.params.subscriptionId,
+            {
+                status: 'cancelled',
+                autoRenew: false
+            },
+            { new: true }
+        );
+
         if (!subscription) {
             return res.status(404).json({ message: 'Subscription not found' });
         }
-        subscription.status = 'cancelled';
-        subscription.endDate = new Date(); // Or based on billing cycle
-        await subscription.save();
-        res.json({ message: 'Subscription cancelled successfully' });
+
+        res.json(subscription);
     } catch (error) {
-        console.error('Error cancelling subscription:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while cancelling subscription' });
     }
 });
 
-module.exports = router;
+// Update subscription usage (pickups and weight)
+router.put('/:subscriptionId/usage', async (req, res) => {
+    try {
+        const { pickupsUsed, weightUsed } = req.body;
+        const updateData = {};
+
+        if (pickupsUsed !== undefined) updateData.pickupsUsed = pickupsUsed;
+        if (weightUsed !== undefined) updateData.weightUsed = weightUsed;
+
+        const updatedSubscription = await Subscription.findByIdAndUpdate(
+            req.params.subscriptionId,
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedSubscription) {
+            return res.status(404).json({ message: 'Subscription not found' });
+        }
+
+        res.json(updatedSubscription);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while updating usage' });
+    }
+});
+
+// Get subscription statistics for admin
+router.get('/admin/stats', async (req, res) => {
+    try {
+        const totalSubscriptions = await Subscription.countDocuments();
+        const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+        const cancelledSubscriptions = await Subscription.countDocuments({ status: 'cancelled' });
+
+        const totalRevenue = await Subscription.aggregate([
+            { $match: { status: 'active' } },
+            { $group: { _id: null, total: { $sum: '$price' } } }
+        ]);
+
+        const monthlyRevenue = await Subscription.aggregate([
+            {
+                $match: {
+                    status: 'active',
+                    startDate: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+                }
+            },
+            { $group: { _id: null, total: { $sum: '$price' } } }
+        ]);
+
+        res.json({
+            totalSubscriptions,
+            activeSubscriptions,
+            cancelledSubscriptions,
+            totalRevenue: totalRevenue[0]?.total || 0,
+            monthlyRevenue: monthlyRevenue[0]?.total || 0
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while fetching subscription stats' });
+    }
+});
+
+// Get all subscriptions for admin
+router.get('/admin/all', async (req, res) => {
+    try {
+        const subscriptions = await Subscription.find()
+            .populate('userId', 'name email')
+            .sort({ createdAt: -1 });
+        res.json(subscriptions);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while fetching all subscriptions' });
+    }
+});
+
+export default router;

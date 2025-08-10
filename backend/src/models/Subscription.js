@@ -5,10 +5,10 @@ const subscriptionSchema = new mongoose.Schema({
     planId: { type: String, required: true },
     planName: { type: String, required: true },
     price: { type: Number, required: true },
-    status: { 
-        type: String, 
-        enum: ['active', 'cancelled', 'expired', 'pending'], 
-        default: 'active' 
+    status: {
+        type: String,
+        enum: ['active', 'cancelled', 'expired', 'pending'],
+        default: 'active'
     },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
