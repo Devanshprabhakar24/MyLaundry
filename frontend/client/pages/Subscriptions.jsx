@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../context/AuthContext";
-import { 
-  CheckCircle, 
-  Star, 
-  Truck, 
-  Shield, 
+import {
+  CheckCircle,
+  Star,
+  Truck,
+  Shield,
   Clock,
   Package,
   Crown,
@@ -162,6 +162,7 @@ export default function Subscriptions() {
     }
   ];
 
+  // Called when user chooses a plan
   const handlePlanSelect = (plan) => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -190,6 +191,42 @@ export default function Subscriptions() {
     setIsProcessing(false);
   };
 
+  // Helper: sanitize card input while typing (allow digits and spaces). Format on blur.
+  const onCardInputChange = (value) => {
+    // allow digits and spaces, max 19 chars (16 digits + 3 spaces)
+    const sanitized = value.replace(/[^\d\s]/g, "").slice(0, 19);
+    setPaymentData(prev => ({ ...prev, cardNumber: sanitized }));
+  };
+
+  // Format card number into groups of 4 on blur
+  const onCardBlur = () => {
+    const digits = paymentData.cardNumber.replace(/\D/g, "").slice(0, 16);
+    const parts = [];
+    for (let i = 0; i < digits.length; i += 4) parts.push(digits.substring(i, i + 4));
+    setPaymentData(prev => ({ ...prev, cardNumber: parts.join(" ") }));
+  };
+
+  // For expiry, allow typing digits and slash. Format on blur to MM/YY if possible.
+  const onExpiryChange = (value) => {
+    const sanitized = value.replace(/[^\d\/]/g, "").slice(0, 5);
+    setPaymentData(prev => ({ ...prev, expiry: sanitized }));
+  };
+
+  const onExpiryBlur = () => {
+    const v = paymentData.expiry.replace(/\D/g, "");
+    if (v.length >= 2) {
+      const mm = v.substring(0, 2);
+      const yy = v.substring(2, 4);
+      const formatted = yy ? `${mm}/${yy}` : `${mm}`;
+      setPaymentData(prev => ({ ...prev, expiry: formatted }));
+    }
+  };
+
+  // Generic onChange for simple fields
+  const onFieldChange = (field, value) => {
+    setPaymentData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -202,15 +239,15 @@ export default function Subscriptions() {
       return;
     }
 
-    // Validate card number length
-    const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
-    if (cardNumber.length !== 16) {
+    // Validate card number length (digits only)
+    const cardNumberDigits = paymentData.cardNumber.replace(/\s/g, '');
+    if (cardNumberDigits.length !== 16) {
       setPaymentError("Please enter a valid 16-digit card number.");
       setIsProcessing(false);
       return;
     }
 
-    // Validate expiry date
+    // Validate expiry date format
     const expiryParts = paymentData.expiry.split('/');
     if (expiryParts.length !== 2 || expiryParts[0].length !== 2 || expiryParts[1].length !== 2) {
       setPaymentError("Please enter a valid expiry date (MM/YY).");
@@ -218,43 +255,42 @@ export default function Subscriptions() {
       return;
     }
 
-    // Validate CVV
+    // Validate CVV length >=3
     if (paymentData.cvv.length < 3) {
       setPaymentError("Please enter a valid CVV.");
       setIsProcessing(false);
       return;
     }
 
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Simulate processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     try {
-      // Debug: Log payment data
-      console.log('Payment Data:', paymentData);
-      
       // Fake payment gateway simulation
       const paymentResult = await simulatePayment(paymentData);
-      
-      if (paymentResult.success) {
-        // Extract expiry month and year from formatted string
-        const expiryParts = paymentData.expiry.split('/');
-        const expiryMonth = expiryParts[0] || '';
-        const expiryYear = expiryParts[1] || '';
 
-        // Create subscription in backend
+      if (paymentResult.success) {
+        // Extract expiry month and year
+        const expiryPartsLocal = paymentData.expiry.split('/');
+        const expiryMonth = expiryPartsLocal[0] || '';
+        const expiryYear = expiryPartsLocal[1] || '';
+
+        // Create subscription payload
         const subscriptionData = {
           userId: user._id,
           planId: selectedPlan.id,
           planName: selectedPlan.name,
           price: selectedPlan.price,
           status: 'active',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
           weightAllowance: selectedPlan.weightAllowance,
           pickupsAllowed: selectedPlan.pickups,
+          weightUsed: 0,
+          pickupsUsed: 0,
           paymentMethod: {
-            cardLast4: paymentData.cardNumber.replace(/\s/g, '').slice(-4),
-            cardBrand: 'Visa', // Default for demo
+            cardLast4: cardNumberDigits.slice(-4),
+            cardBrand: 'Visa',
             expiryMonth: expiryMonth,
             expiryYear: expiryYear
           },
@@ -275,10 +311,11 @@ export default function Subscriptions() {
 
         if (response.ok) {
           setPaymentSuccess(true);
+          // small delay so user sees success
           setTimeout(() => {
             handleCloseModal();
             navigate('/dashboard');
-          }, 2000);
+          }, 1500);
         } else {
           setPaymentError("Failed to create subscription. Please try again.");
         }
@@ -286,429 +323,73 @@ export default function Subscriptions() {
         setPaymentError(paymentResult.message || "Payment failed. Please check your card details.");
       }
     } catch (error) {
+      console.error("Payment error:", error);
       setPaymentError("An error occurred during payment processing.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const simulatePayment = async (paymentData) => {
-    // Simulate various payment scenarios
-    const cardNumber = paymentData.cardNumber.replace(/\s/g, '');
-    
-    // Test card numbers for different scenarios
+  const simulatePayment = async (paymentDataLocal) => {
+    const cardNumber = paymentDataLocal.cardNumber.replace(/\s/g, '');
+
     if (cardNumber === '4000000000000002') {
       return { success: false, message: "Card declined. Please try a different card." };
     }
-    
+
     if (cardNumber === '4000000000009995') {
       return { success: false, message: "Insufficient funds." };
     }
-    
+
     if (cardNumber === '4000000000009987') {
       return { success: false, message: "Card expired." };
     }
-    
-    // Valid test card
+
     if (cardNumber.length === 16 && cardNumber.startsWith('4')) {
       return { success: true, transactionId: 'txn_' + Math.random().toString(36).substr(2, 9) };
     }
-    
+
     return { success: false, message: "Invalid card number." };
   };
 
   const formatCardNumber = (value) => {
-    // Remove all non-digits and spaces
     const v = value.replace(/\D/g, '');
-    
-    // Format as groups of 4 digits
     const parts = [];
     for (let i = 0; i < v.length && i < 16; i += 4) {
       parts.push(v.substring(i, i + 4));
     }
-    
     return parts.join(' ');
   };
 
   const formatExpiry = (value) => {
-    // Remove all non-digits
     const v = value.replace(/\D/g, '');
-    
-    // Format as MM/YY
     if (v.length >= 2) {
       const month = v.substring(0, 2);
       const year = v.substring(2, 4);
-      return month + '/' + year;
+      return year ? month + '/' + year : month;
     }
-    
     return v;
   };
 
-  const PaymentModal = () => {
-    if (!showPaymentModal) return null;
-
-    const handleBackdropClick = (e) => {
-      if (e.target === e.currentTarget) {
-        handleCloseModal();
-      }
-    };
-
+  // If user is not authenticated show login CTA
+  if (!isAuthenticated) {
     return (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-        onClick={handleBackdropClick}
-      >
-        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100">
-          <div className="p-6">
-            {/* Header with gradient */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-r from-laundry-blue to-blue-600 p-2 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Complete Subscription</h2>
-                  <p className="text-sm text-gray-500">Secure payment processing</p>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Card>
+          <CardHeader>
+            <CardTitle>Please login</CardTitle>
+            <CardDescription>You need to login to subscribe to a plan.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/login')}>Login</Button>
+              <Button variant="outline" onClick={() => navigate('/signup')}>Sign Up</Button>
             </div>
-            
-            {/* Plan Summary */}
-            <div className="bg-gradient-to-r from-laundry-light-blue to-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{selectedPlan?.name} Plan</h3>
-                  <p className="text-sm text-gray-600">Monthly subscription</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-laundry-blue">₹{selectedPlan?.price}</div>
-                  <div className="text-xs text-gray-500">per month</div>
-                </div>
-              </div>
-            </div>
-
-            {paymentSuccess ? (
-              <div className="text-center py-8">
-                <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <Check className="h-10 w-10 text-green-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-green-800 mb-3">Payment Successful!</h3>
-                <p className="text-green-600 mb-6">Your {selectedPlan?.name} subscription is now active.</p>
-                
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-green-800">Subscription Details</span>
-                  </div>
-                  <div className="text-sm text-green-700">
-                    <p>Plan: {selectedPlan?.name}</p>
-                    <p>Amount: ₹{selectedPlan?.price}/month</p>
-                    <p>Status: Active</p>
-                  </div>
-                </div>
-                
-                <p className="text-sm text-gray-600">
-                  Redirecting to dashboard in a few seconds...
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handlePaymentSubmit} className="space-y-5">
-                {/* Payment Information Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 bg-laundry-blue rounded-full"></div>
-                    <h3 className="font-semibold text-gray-900">Payment Information</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardNumber" className="text-sm font-medium text-gray-700">Card Number</Label>
-                      <Input
-                        id="cardNumber"
-                        placeholder="1234 5678 9012 3456"
-                        value={paymentData.cardNumber}
-                        onChange={(e) => setPaymentData(prev => ({
-                          ...prev,
-                          cardNumber: formatCardNumber(e.target.value)
-                        }))}
-                        maxLength={19}
-                        required
-                        className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiry" className="text-sm font-medium text-gray-700">Expiry Date</Label>
-                        <Input
-                          id="expiry"
-                          placeholder="MM/YY"
-                          value={paymentData.expiry}
-                          onChange={(e) => {
-                            const formatted = formatExpiry(e.target.value);
-                            setPaymentData(prev => ({
-                              ...prev,
-                              expiry: formatted
-                            }));
-                          }}
-                          maxLength={5}
-                          required
-                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvv" className="text-sm font-medium text-gray-700">CVV</Label>
-                        <Input
-                          id="cvv"
-                          placeholder="123"
-                          value={paymentData.cvv}
-                          onChange={(e) => setPaymentData(prev => ({
-                            ...prev,
-                            cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
-                          }))}
-                          maxLength={4}
-                          required
-                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cardHolder" className="text-sm font-medium text-gray-700">Cardholder Name</Label>
-                      <Input
-                        id="cardHolder"
-                        placeholder="John Doe"
-                        value={paymentData.cardHolder}
-                        onChange={(e) => setPaymentData(prev => ({
-                          ...prev,
-                          cardHolder: e.target.value
-                        }))}
-                        required
-                        className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Billing Information Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <h3 className="font-semibold text-gray-900">Billing Information</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="billingAddress" className="text-sm font-medium text-gray-700">Billing Address</Label>
-                      <Input
-                        id="billingAddress"
-                        placeholder="123 Main Street"
-                        value={paymentData.billingAddress}
-                        onChange={(e) => setPaymentData(prev => ({
-                          ...prev,
-                          billingAddress: e.target.value
-                        }))}
-                        required
-                        className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="city" className="text-sm font-medium text-gray-700">City</Label>
-                        <Input
-                          id="city"
-                          placeholder="Mumbai"
-                          value={paymentData.city}
-                          onChange={(e) => setPaymentData(prev => ({
-                            ...prev,
-                            city: e.target.value
-                          }))}
-                          required
-                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="zipCode" className="text-sm font-medium text-gray-700">ZIP Code</Label>
-                        <Input
-                          id="zipCode"
-                          placeholder="400001"
-                          value={paymentData.zipCode}
-                          onChange={(e) => setPaymentData(prev => ({
-                            ...prev,
-                            zipCode: e.target.value
-                          }))}
-                          required
-                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input
-                      id="expiry"
-                      placeholder="MM/YY"
-                      value={paymentData.expiry}
-                      onChange={(e) => {
-                        const formatted = formatExpiry(e.target.value);
-                        setPaymentData(prev => ({
-                          ...prev,
-                          expiry: formatted
-                        }));
-                      }}
-                      maxLength={5}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input
-                      id="cvv"
-                      placeholder="123"
-                      value={paymentData.cvv}
-                      onChange={(e) => setPaymentData(prev => ({
-                        ...prev,
-                        cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
-                      }))}
-                      maxLength={4}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cardHolder">Cardholder Name</Label>
-                  <Input
-                    id="cardHolder"
-                    placeholder="John Doe"
-                    value={paymentData.cardHolder}
-                    onChange={(e) => setPaymentData(prev => ({
-                      ...prev,
-                      cardHolder: e.target.value
-                    }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="billingAddress">Billing Address</Label>
-                  <Input
-                    id="billingAddress"
-                    placeholder="123 Main Street"
-                    value={paymentData.billingAddress}
-                    onChange={(e) => setPaymentData(prev => ({
-                      ...prev,
-                      billingAddress: e.target.value
-                    }))}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="Mumbai"
-                      value={paymentData.city}
-                      onChange={(e) => setPaymentData(prev => ({
-                        ...prev,
-                        city: e.target.value
-                      }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input
-                      id="zipCode"
-                      placeholder="400001"
-                      value={paymentData.zipCode}
-                      onChange={(e) => setPaymentData(prev => ({
-                        ...prev,
-                        zipCode: e.target.value
-                      }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {paymentError && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-red-700 font-medium">Payment Error</span>
-                    </div>
-                    <p className="text-red-600 text-sm mt-1">{paymentError}</p>
-                  </div>
-                )}
-
-                {/* Security Notice */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 p-1 rounded-full">
-                      <Lock className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-blue-900">Secure Payment</h4>
-                      <p className="text-xs text-blue-700 mt-1">
-                        Your payment information is encrypted and secure. We use industry-standard SSL encryption.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCloseModal}
-                    className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
-                    disabled={isProcessing}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 h-12 bg-gradient-to-r from-laundry-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg"
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Processing Payment...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        <span>Subscribe for ₹{selectedPlan?.price}</span>
-                      </div>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Terms */}
-                <p className="text-xs text-gray-500 text-center">
-                  By subscribing, you agree to our Terms of Service and Privacy Policy
-                </p>
-              </form>
-            )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
-  };
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -957,8 +638,252 @@ export default function Subscriptions() {
         </div>
       </section>
 
-      {/* Payment Modal */}
-      <PaymentModal />
+      {/* Payment Modal (single set of inputs, formatted on blur) */}
+      {/*
+        Modal remains mounted only when showPaymentModal === true.
+        Inputs are controlled and sanitized on change to avoid cursor jump/focus loss.
+      */}
+      {showPaymentModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-r from-laundry-blue to-blue-600 p-2 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Complete Subscription</h2>
+                    <p className="text-sm text-gray-500">Secure payment processing</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Plan Summary */}
+              <div className="bg-gradient-to-r from-laundry-light-blue to-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{selectedPlan?.name} Plan</h3>
+                    <p className="text-sm text-gray-600">Monthly subscription</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-laundry-blue">₹{selectedPlan?.price}</div>
+                    <div className="text-xs text-gray-500">per month</div>
+                  </div>
+                </div>
+              </div>
+
+              {paymentSuccess ? (
+                <div className="text-center py-8">
+                  <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <Check className="h-10 w-10 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-green-800 mb-3">Payment Successful!</h3>
+                  <p className="text-green-600 mb-6">Your {selectedPlan?.name} subscription is now active.</p>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-800">Subscription Details</span>
+                    </div>
+                    <div className="text-sm text-green-700">
+                      <p>Plan: {selectedPlan?.name}</p>
+                      <p>Amount: ₹{selectedPlan?.price}/month</p>
+                      <p>Status: Active</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    Redirecting to dashboard in a few seconds...
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handlePaymentSubmit} className="space-y-5">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 bg-laundry-blue rounded-full"></div>
+                      <h3 className="font-semibold text-gray-900">Payment Information</h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="cardNumber" className="text-sm font-medium text-gray-700">Card Number</Label>
+                        <Input
+                          id="cardNumber"
+                          placeholder="1234 5678 9012 3456"
+                          value={paymentData.cardNumber}
+                          onChange={(e) => onCardInputChange(e.target.value)}
+                          onBlur={onCardBlur}
+                          maxLength={19}
+                          required
+                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="expiry" className="text-sm font-medium text-gray-700">Expiry Date</Label>
+                          <Input
+                            id="expiry"
+                            placeholder="MM/YY"
+                            value={paymentData.expiry}
+                            onChange={(e) => onExpiryChange(e.target.value)}
+                            onBlur={onExpiryBlur}
+                            maxLength={5}
+                            required
+                            className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cvv" className="text-sm font-medium text-gray-700">CVV</Label>
+                          <Input
+                            id="cvv"
+                            placeholder="123"
+                            value={paymentData.cvv}
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, '').substring(0, 4) }))}
+                            maxLength={4}
+                            required
+                            className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="cardHolder" className="text-sm font-medium text-gray-700">Cardholder Name</Label>
+                        <Input
+                          id="cardHolder"
+                          placeholder="John Doe"
+                          value={paymentData.cardHolder}
+                          onChange={(e) => setPaymentData(prev => ({ ...prev, cardHolder: e.target.value }))}
+                          required
+                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Billing Information Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <h3 className="font-semibold text-gray-900">Billing Information</h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="billingAddress" className="text-sm font-medium text-gray-700">Billing Address</Label>
+                        <Input
+                          id="billingAddress"
+                          placeholder="123 Main Street"
+                          value={paymentData.billingAddress}
+                          onChange={(e) => setPaymentData(prev => ({ ...prev, billingAddress: e.target.value }))}
+                          required
+                          className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="city" className="text-sm font-medium text-gray-700">City</Label>
+                          <Input
+                            id="city"
+                            placeholder="Mumbai"
+                            value={paymentData.city}
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, city: e.target.value }))}
+                            required
+                            className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="zipCode" className="text-sm font-medium text-gray-700">ZIP Code</Label>
+                          <Input
+                            id="zipCode"
+                            placeholder="400001"
+                            value={paymentData.zipCode}
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, zipCode: e.target.value }))}
+                            required
+                            className="border-gray-300 focus:border-laundry-blue focus:ring-laundry-blue"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {paymentError && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-red-700 font-medium">Payment Error</span>
+                      </div>
+                      <p className="text-red-600 text-sm mt-1">{paymentError}</p>
+                    </div>
+                  )}
+
+                  {/* Security Notice */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 p-1 rounded-full">
+                        <Lock className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-blue-900">Secure Payment</h4>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Your payment information is encrypted and secure. We use industry-standard SSL encryption.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCloseModal}
+                      className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
+                      disabled={isProcessing}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 h-12 bg-gradient-to-r from-laundry-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg"
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Processing Payment...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          <span>Subscribe for ₹{selectedPlan?.price}</span>
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Terms */}
+                  <p className="text-xs text-gray-500 text-center">
+                    By subscribing, you agree to our Terms of Service and Privacy Policy
+                  </p>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
