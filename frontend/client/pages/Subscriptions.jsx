@@ -231,6 +231,12 @@ export default function Subscriptions() {
     e.preventDefault();
     setIsProcessing(true);
     setPaymentError("");
+     // Add a guard to ensure user and user._id are available
+    if (!user || !user._id) {
+      setPaymentError("Your session has expired. Please log out and log back in.");
+      setIsProcessing(false);
+      return;
+    }
 
     // Validate required fields
     if (!paymentData.cardNumber || !paymentData.cardHolder || !paymentData.expiry || !paymentData.cvv || !paymentData.billingAddress || !paymentData.city || !paymentData.zipCode) {
