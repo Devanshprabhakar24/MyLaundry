@@ -13,8 +13,19 @@ import subscriptionRoutes from './routes/subscriptions.js';
 const app = express();
 const port = process.env.PORT || 3001;
 
+// --- START: CORS FIX ---
+// This section is crucial. It tells your backend to trust your frontend application.
+const corsOptions = {
+    origin: 'http://localhost:8080', // Allow requests from your frontend's address
+    credentials: true, // Allow cookies and authentication headers to be sent
+};
+
+app.use(cors(corsOptions));
+// --- END: CORS FIX ---
+
+
 // Middleware
-app.use(cors());
+// The original app.use(cors()); is now replaced by the configuration above.
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

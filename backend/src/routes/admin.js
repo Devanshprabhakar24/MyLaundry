@@ -55,4 +55,36 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+// Fetch all customers for the admin dashboard (Optimized with Aggregation)
+router.get('/customers', async (req, res) => {
+    try {
+        const customerData = await User.aggregate([
+            { $match: { role: 'user' } },
+            {
+                $lookup: {
+                    from: 'orders', // The name of the orders collection in MongoDB
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'orders'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    email: 1,
+                    phone: 1,
+                    address: 1,
+                    createdAt: 1,
+                    totalOrders: { $size: '$orders' },
+                    totalSpent: { $sum: '$orders.total' }
+                }
+            }
+        ]);
+        res.json(customerData);
+    } catch (error) {
+        console.error("Error fetching customers:", error);
+        res.status(500).json({ message: 'Server error while fetching customers' });
+    }
+});
+
 export default router;

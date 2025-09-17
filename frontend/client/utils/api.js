@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3001/api/v1",
+  baseURL: "https://mylaundry-backend-hi3w.onrender.com/api" || "http://localhost:3001/api",
   withCredentials: true,
 });
 
