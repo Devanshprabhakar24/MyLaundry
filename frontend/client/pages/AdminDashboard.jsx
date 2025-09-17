@@ -12,9 +12,23 @@ import {
   Users,
   Clock,
   IndianRupee,
-  Search,
-  Eye
+  Search
 } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
+
+const StatsCard = ({ title, value, icon, iconBgClass }) => (
+    <Card>
+        <CardContent className="p-6 flex items-center justify-between">
+            <div>
+                <p className="text-sm text-laundry-gray">{title}</p>
+                <p className={`text-2xl font-bold text-laundry-dark`}>{value}</p>
+            </div>
+            <div className={`text-white p-3 rounded-lg ${iconBgClass}`}>
+                {icon}
+            </div>
+        </CardContent>
+    </Card>
+);
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -22,12 +36,10 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchData = async () => {
-    // We don't set loading to true here to avoid a full page flash on refetch
     try {
       const [statsRes, ordersRes, activitiesRes] = await Promise.all([
         api.get("/admin/stats"),
@@ -48,18 +60,6 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pickup_scheduled': return 'bg-blue-100 text-blue-800';
-      case 'picked_up': return 'bg-yellow-100 text-yellow-800';
-      case 'washing': return 'bg-orange-100 text-orange-800';
-      case 'ready': return 'bg-green-100 text-green-800';
-      case 'out_for_delivery': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getStatusText = (status) => {
     const statusMap = {
       pickup_scheduled: 'Pickup Scheduled',
@@ -76,7 +76,6 @@ export default function AdminDashboard() {
     try {
         const response = await api.put(`/admin/orders/${orderId}`, { status: newStatus });
         if (response.data) {
-            // Refetch all data to ensure consistency across the dashboard
             fetchData();
         }
     } catch (error) {
@@ -102,129 +101,90 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-laundry-gray">Total Orders</p>
-                  <p className="text-2xl font-bold text-laundry-dark">{stats.totalOrders}</p>
-                </div>
-                <Package className="h-8 w-8 text-laundry-blue" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-laundry-gray">Pending Orders</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</p>
-                </div>
-                <Clock className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-laundry-gray">Active Customers</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.activeCustomers}</p>
-                </div>
-                <Users className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-laundry-gray">Total Revenue</p>
-                  <p className="text-2xl font-bold text-laundry-blue">₹{stats.totalRevenue.toFixed(2)}</p>
-                </div>
-                <IndianRupee className="h-8 w-8 text-laundry-blue" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatsCard title="Total Orders" value={stats.totalOrders} icon={<Package className="h-6 w-6" />} iconBgClass="bg-laundry-blue" />
+          <StatsCard title="Pending Orders" value={stats.pendingOrders} icon={<Clock className="h-6 w-6" />} iconBgClass="bg-orange-500" />
+          <StatsCard title="Active Customers" value={stats.activeCustomers} icon={<Users className="h-6 w-6" />} iconBgClass="bg-green-500" />
+          <StatsCard title="Total Revenue" value={`₹${stats.totalRevenue.toFixed(2)}`} icon={<IndianRupee className="h-6 w-6" />} iconBgClass="bg-laundry-blue" />
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-laundry-blue" />
-                  Order Management
-                </CardTitle>
-                <CardDescription>Monitor and update order statuses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-laundry-gray" />
-                      <Input
-                        placeholder="Search by customer name or order ID..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="pickup_scheduled">Pickup Scheduled</SelectItem>
-                        <SelectItem value="picked_up">Picked Up</SelectItem>
-                        <SelectItem value="washing">Washing</SelectItem>
-                        <SelectItem value="ready">Ready</SelectItem>
-                        <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-4">
-                    {filteredOrders.map((order) => (
-                      <div key={order._id} className="border rounded-lg p-4 bg-white flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-laundry-dark">#{order._id.slice(-6)}</h3>
-                          <p className="text-sm text-laundry-gray">{order.userId?.name}</p>
-                          <Badge className={getStatusColor(order.status)}>{getStatusText(order.status)}</Badge>
+        <Card>
+            <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <CardTitle className="flex items-center gap-2 mb-4">
+                        <Package className="h-5 w-5 text-laundry-blue" />
+                        Order Management
+                    </CardTitle>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-laundry-gray" />
+                            <Input
+                                placeholder="Search by customer name or order ID..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                            />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={order.status}
-                            onValueChange={(newStatus) => updateOrderStatus(order._id, newStatus)}
-                          >
-                            <SelectTrigger className="w-40">
-                              <SelectValue />
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full sm:w-48">
+                                <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pickup_scheduled">Pickup Scheduled</SelectItem>
-                              <SelectItem value="picked_up">Picked Up</SelectItem>
-                              <SelectItem value="washing">Washing</SelectItem>
-                              <SelectItem value="ready">Ready</SelectItem>
-                              <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="pickup_scheduled">Pickup Scheduled</SelectItem>
+                                <SelectItem value="picked_up">Picked Up</SelectItem>
+                                <SelectItem value="washing">Washing</SelectItem>
+                                <SelectItem value="ready">Ready</SelectItem>
+                                <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
                             </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    ))}
-                    {filteredOrders.length === 0 && !isLoading && (
-                      <div className="text-center py-8 text-laundry-gray">No orders found.</div>
-                    )}
-                  </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div>
-            <ActivityFeed activities={activities} isLoading={isLoading} />
-          </div>
-        </div>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-4">
+                        {filteredOrders.map((order) => (
+                            <div key={order._id} className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                                    <div>
+                                        <h3 className="font-semibold text-laundry-dark">#{order._id.slice(-6)}</h3>
+                                        <p className="text-sm text-gray-600">{order.userId?.name || "N/A"}</p>
+                                    </div>
+                                    <div className="mt-2 sm:mt-0">
+                                        <Select
+                                        value={order.status}
+                                        onValueChange={(newStatus) => updateOrderStatus(order._id, newStatus)}
+                                        >
+                                        <SelectTrigger className="w-40">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pickup_scheduled">Pickup Scheduled</SelectItem>
+                                            <SelectItem value="picked_up">Picked Up</SelectItem>
+                                            <SelectItem value="washing">Washing</SelectItem>
+                                            <SelectItem value="ready">Ready</SelectItem>
+                                            <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                                            <SelectItem value="completed">Completed</SelectItem>
+                                        </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="border-t my-2"></div>
+                                <div className="text-sm text-gray-500 flex justify-between">
+                                    <span>Pickup: {new Date(order.pickupDate).toLocaleDateString()}</span>
+                                    <span className="font-semibold text-laundry-blue">Total: ₹{order.total}</span>
+                                </div>
+                            </div>
+                        ))}
+                        {filteredOrders.length === 0 && !isLoading && (
+                            <div className="text-center py-8 text-laundry-gray">No orders found.</div>
+                        )}
+                    </div>
+                </div>
+                
+                <div className="lg:border-l lg:pl-8">
+                    <ActivityFeed activities={activities} isLoading={isLoading} />
+                </div>
+            </CardContent>
+        </Card>
       </div>
     </div>
   );

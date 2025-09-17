@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bell, UserPlus, PackagePlus, Zap } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
 
 const iconMap = {
   new_user: <UserPlus className="h-4 w-4" />,
@@ -17,27 +18,24 @@ const colorMap = {
 
 export default function ActivityFeed({ activities, isLoading }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-laundry-blue" />
-          Recent Activity
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+            <Bell className="h-5 w-5 text-laundry-blue" />
+            Recent Activity
+        </h3>
         <div className="space-y-4">
           {isLoading ? (
             <p>Loading activities...</p>
           ) : activities.length > 0 ? (
             activities.map((activity) => (
               <div key={activity._id} className="flex items-start gap-3">
-                <Badge variant="secondary" className={colorMap[activity.type]}>
+                <Badge variant="secondary" className={`p-2 ${colorMap[activity.type]}`}>
                   {iconMap[activity.type]}
                 </Badge>
                 <div>
                   <p className="text-sm">{activity.message}</p>
                   <p className="text-xs text-gray-500">
-                    {new Date(activity.createdAt).toLocaleString()}
+                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
                   </p>
                 </div>
               </div>
@@ -48,7 +46,6 @@ export default function ActivityFeed({ activities, isLoading }) {
             </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
