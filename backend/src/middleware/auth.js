@@ -1,3 +1,4 @@
+// backend/src/middleware/auth.js  (or backend/src/routes/auth.js if this is where you keep it)
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
@@ -18,16 +19,18 @@ export const protect = async (req, res, next) => {
             // Get user from the token
             req.user = await User.findById(decoded.id).select('-password');
 
-            next();
+            if (!req.user) {
+                return res.status(401).json({ ok: false, message: 'User not found' });
+            }
+
+            return next();
         } catch (error) {
-            console.error(error);
-            res.status(401);
-            throw new Error('Not authorized, token failed');
+            console.error('Auth protect error:', error);
+            return res.status(401).json({ ok: false, message: 'Not authorized, token failed' });
         }
     }
 
     if (!token) {
-        res.status(401);
-        throw new Error('Not authorized, no token');
+        return res.status(401).json({ ok: false, message: 'Not authorized, no token' });
     }
 };

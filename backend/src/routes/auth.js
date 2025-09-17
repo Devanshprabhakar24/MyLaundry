@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
-import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
-import { sendWelcomeEmail } from '../services/emailService.js'; // <-- ADD THIS
+import { logActivity } from './activity.js'; // ensure this file exists
+import { sendWelcomeEmail } from '../services/emailService.js';
 
 const router = Router();
 
@@ -14,12 +14,13 @@ router.post('/login', async (req, res) => {
         if (user && (await bcrypt.compare(password, user.password))) {
             const userObject = user.toObject();
             delete userObject.password;
-            res.json({ success: true, user: userObject });
+            return res.json({ success: true, user: userObject });
         } else {
-            res.status(401).json({ success: false, message: 'Invalid credentials' });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('[auth.login] error:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
@@ -30,17 +31,40 @@ router.post('/signup', async (req, res) => {
         if (await User.findOne({ email })) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
-        const newUser = new User({ name, email, password });
+
+        // 🔐 Hash password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({ name, email, password: hashedPassword });
         await newUser.save();
 
-        await logActivity('new_user', `New user registered: ${name}`, newUser._id);
-        sendWelcomeEmail(email, name); // <-- ADD THIS
+        // Log activity
+        try {
+            await logActivity('new_user', `New user registered: ${name}`, newUser._id);
+        } catch (err) {
+            console.warn('[auth.signup] Failed to log activity:', err.message);
+        }
+
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail(email, name)
+            .then(r => {
+                if (r && r.ok) {
+                    console.log('[auth.signup] Welcome email sent:', r.info?.messageId);
+                } else {
+                    console.warn('[auth.signup] Welcome email failed:', r?.error || r);
+                }
+            })
+            .catch(err => {
+                console.error('[auth.signup] Error sending welcome email:', err.message);
+            });
 
         const userObject = newUser.toObject();
         delete userObject.password;
-        res.status(201).json({ success: true, user: userObject });
+        return res.status(201).json({ success: true, user: userObject });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('[auth.signup] error:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
