@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import Order from '../models/Order.js';
 import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
+import User from '../models/User.js'; // <-- ADD THIS
+import { sendOrderConfirmationEmail } from '../services/emailService.js'; // <-- ADD THIS
 
 const router = Router();
 
@@ -35,8 +37,13 @@ router.post('/', async (req, res) => {
         const newOrder = new Order(req.body);
         await newOrder.save();
 
-        // Log the new order activity
         await logActivity('new_order', `New order #${newOrder._id.toString().slice(-6)} placed.`, newOrder.userId, newOrder._id);
+
+        // Send confirmation email
+        const user = await User.findById(newOrder.userId);
+        if (user) {
+            sendOrderConfirmationEmail(user.email, newOrder);
+        }
 
         res.status(201).json(newOrder);
     } catch (error) {

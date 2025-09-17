@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
+import { sendOrderStatusUpdateEmail } from '../services/emailService.js'; // <-- ADD THIS
 
 const router = Router();
 
@@ -24,15 +25,19 @@ router.put('/orders/:orderId', async (req, res) => {
             req.params.orderId,
             { status },
             { new: true }
-        ).populate('userId', 'name');
+        ).populate('userId', 'name email');
 
-        // Log the status update activity
         await logActivity(
             'status_update',
             `Order #${updatedOrder._id.toString().slice(-6)} status updated to ${status}.`,
             updatedOrder.userId._id,
             updatedOrder._id
         );
+
+        // Send status update email
+        if (updatedOrder.userId) {
+            sendOrderStatusUpdateEmail(updatedOrder.userId.email, updatedOrder);
+        }
 
         res.json(updatedOrder);
     } catch (error) {
