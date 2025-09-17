@@ -14,6 +14,7 @@ import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 import garmentRoutes from "./routes/garments.js";
 import subscriptionRoutes from "./routes/subscriptions.js";
+import activityRoutes from './routes/activity.js'; // <-- ADD THIS IMPORT
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -50,6 +51,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/garments", garmentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use('/api/activities', activityRoutes); // <-- ADD THIS LINE
 
 // Health check route
 app.get("/", (req, res) => {

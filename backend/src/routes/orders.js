@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Order from '../models/Order.js';
+import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
 
 const router = Router();
 
@@ -33,6 +34,10 @@ router.post('/', async (req, res) => {
     try {
         const newOrder = new Order(req.body);
         await newOrder.save();
+
+        // Log the new order activity
+        await logActivity('new_order', `New order #${newOrder._id.toString().slice(-6)} placed.`, newOrder.userId, newOrder._id);
+
         res.status(201).json(newOrder);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });

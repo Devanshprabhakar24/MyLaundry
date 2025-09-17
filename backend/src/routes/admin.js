@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
 
 const router = Router();
 
@@ -22,14 +23,22 @@ router.put('/orders/:orderId', async (req, res) => {
         const updatedOrder = await Order.findByIdAndUpdate(
             req.params.orderId,
             { status },
-            { new: true } // This option returns the document after it has been updated
+            { new: true }
+        ).populate('userId', 'name');
+
+        // Log the status update activity
+        await logActivity(
+            'status_update',
+            `Order #${updatedOrder._id.toString().slice(-6)} status updated to ${status}.`,
+            updatedOrder.userId._id,
+            updatedOrder._id
         );
+
         res.json(updatedOrder);
     } catch (error) {
         res.status(500).json({ message: 'Server error while updating order' });
     }
 });
-
 // Get dashboard statistics
 router.get('/stats', async (req, res) => {
     try {

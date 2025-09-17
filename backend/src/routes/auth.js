@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
+import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Signup
+/// Signup
 router.post('/signup', async (req, res) => {
     const { name, email, password } = req.body;
     try {
@@ -30,6 +31,9 @@ router.post('/signup', async (req, res) => {
         }
         const newUser = new User({ name, email, password });
         await newUser.save();
+
+        // Log the new user activity
+        await logActivity('new_user', `New user registered: ${name}`, newUser._id);
 
         const userObject = newUser.toObject();
         delete userObject.password;
