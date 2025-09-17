@@ -26,6 +26,8 @@ import MyOrders from "./pages/MyOrders.jsx";
 import Profile from "./pages/Profile.jsx";
 import Help from "./pages/Help.jsx";
 import SubscriptionManagement from "./pages/SubscriptionManagement.jsx";
+import AdminOrders from "./pages/AdminOrders.jsx";
+import AdminCustomers from "./pages/AdminCustomers.jsx";
 
 const queryClient = new QueryClient();
 
@@ -82,9 +84,9 @@ const App = () => (
             {/* Admin Dashboard Routes */}
             <Route path="/admin/dashboard" element={<Layout><AdminDashboard /></Layout>} />
             <Route path="/AdminDashboard" element={<Layout><AdminDashboard /></Layout>} />
-            <Route path="/admin/orders" element={<PlaceholderPage title="Admin - Manage Orders" />} />
-            <Route path="/admin/customers" element={<PlaceholderPage title="Admin - Customers" />} />
-
+   
+            <Route path="/admin/orders" element={<Layout><AdminOrders /></Layout>} />
+            <Route path="/admin/customers" element={<Layout><AdminCustomers /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
