@@ -104,15 +104,6 @@ export function Layout({ children }) {
                     ADMIN Dashboard
                   </Link>
                   <Link
-                    to="/admin/orders"
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-laundry-blue ${
-                      isActive("/admin/orders") ? "text-laundry-blue" : "text-laundry-gray"
-                    }`}
-                  >
-                    <Package className="h-4 w-4" />
-                    Manage Orders
-                  </Link>
-                  <Link
                     to="/admin/customers"
                     className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-laundry-blue ${
                       isActive("/admin/customers") ? "text-laundry-blue" : "text-laundry-gray"
@@ -339,13 +330,6 @@ export function Layout({ children }) {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin Dashboard
-                  </Link>
-                  <Link
-                    to="/admin/orders"
-                    className="block px-3 py-2 text-base font-medium text-laundry-gray hover:text-laundry-blue"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Manage Orders
                   </Link>
                   <Link
                     to="/admin/customers"
