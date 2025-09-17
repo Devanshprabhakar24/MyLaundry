@@ -2,60 +2,69 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Import Routes
 import demoRoutes from "./routes/demo.js";
-import authRoutes from './routes/auth.js';
-import orderRoutes from './routes/orders.js';
-import userRoutes from './routes/users.js';
-import adminRoutes from './routes/admin.js';
-import garmentRoutes from './routes/garments.js';
-import subscriptionRoutes from './routes/subscriptions.js';
+import authRoutes from "./routes/auth.js";
+import orderRoutes from "./routes/orders.js";
+import userRoutes from "./routes/users.js";
+import adminRoutes from "./routes/admin.js";
+import garmentRoutes from "./routes/garments.js";
+import subscriptionRoutes from "./routes/subscriptions.js";
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// --- START: CORS FIX ---
-// This section is crucial. It tells your backend to trust your frontend application.
+// --- Create uploads directory if it doesn't exist ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "..", "public/uploads");
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log(`Created directory: ${uploadsDir}`);
+}
+
+// --- CORS Configuration ---
 const corsOptions = {
-    origin: 'http://localhost:8080', // Allow requests from your frontend's address
-    credentials: true, // Allow cookies and authentication headers to be sent
+    origin: "http://localhost:8080",
+    credentials: true,
 };
-
 app.use(cors(corsOptions));
-// --- END: CORS FIX ---
 
-
-// Middleware
-// The original app.use(cors()); is now replaced by the configuration above.
+// --- Middleware ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API routes
-app.use('/api/demo', demoRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/garments', garmentRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
+// Serve static files from the 'public' directory
+app.use(express.static("public"));
 
-// Health check route for Render
+// --- API Routes ---
+app.use("/api/demo", demoRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/garments", garmentRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+
+// Health check route
 app.get("/", (req, res) => {
     res.send("MyLaundry Backend is running!");
 });
 
-app.get("/api/ping", (_req, res) => {
-    const ping = process.env.PING_MESSAGE ?? "ping";
-    res.json({ message: ping });
-});
-
-// Connect to MongoDB and start server
-mongoose.connect(process.env.MONGODB_URI)
+// --- Server Startup ---
+mongoose
+    .connect(process.env.MONGODB_URI)
     .then(() => {
-        console.log('Connected to MongoDB');
+        console.log("Connected to MongoDB");
         app.listen(port, () => {
             console.log(`🚀 MyLaundry backend server running on port ${port}`);
         });
     })
-    .catch(err => {
-        console.error('Database connection error:', err);
+    .catch((err) => {
+        console.error("Database connection error:", err);
     });
