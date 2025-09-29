@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import API_URL from '../apiConfig'; // Add this line
+import api from "../utils/api"; // Import the centralized axios instance
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
@@ -18,17 +18,10 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('https://mylaundry-backend-hi3w.onrender.com/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await api.post('/auth/login', { email, password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data.success) {
         setUser(data.user);
         setIsAuthenticated(true);
         localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
@@ -38,23 +31,16 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: 'An error occurred during login.' };
+      return { success: false, message: error.response?.data?.message || 'An error occurred during login.' };
     }
   };
 
   const signup = async (name, email, password) => {
     try {
-      const response = await fetch('https://mylaundry-backend-hi3w.onrender.com/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const response = await api.post('/auth/signup', { name, email, password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data.success) {
         setUser(data.user);
         setIsAuthenticated(true);
         localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
@@ -64,7 +50,7 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Signup error:', error);
-      return { success: false, message: 'An error occurred during signup.' };
+      return { success: false, message: error.response?.data?.message || 'An error occurred during signup.' };
     }
   };
 

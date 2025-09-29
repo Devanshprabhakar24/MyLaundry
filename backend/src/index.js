@@ -14,7 +14,7 @@ import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 import garmentRoutes from "./routes/garments.js";
 import subscriptionRoutes from "./routes/subscriptions.js";
-import activityRoutes from './routes/activity.js'; // <-- ADD THIS IMPORT
+import activityRoutes from './routes/activity.js';
 import devRoutes from './routes/dev.js';
 
 
@@ -32,8 +32,23 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // --- CORS Configuration ---
+const allowedOrigins = [
+    'http://localhost:8080',
+    'https://my-laundry-lime.vercel.app', // Your Vercel frontend URL
+    'https://my-laundry.vercel.app' // I noticed this in the project name, adding it just in case
+];
+
 const corsOptions = {
-    origin: "http://localhost:8080",
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     credentials: true,
 };
 app.use(cors(corsOptions));
@@ -53,7 +68,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/garments", garmentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
-app.use('/api/activities', activityRoutes); // <-- ADD THIS LINE
+app.use('/api/activities', activityRoutes);
 app.use('/dev', devRoutes);
 // Health check route
 app.get("/", (req, res) => {
