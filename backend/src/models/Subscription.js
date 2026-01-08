@@ -5,6 +5,16 @@ const subscriptionSchema = new mongoose.Schema({
     planId: { type: String, required: true },
     planName: { type: String, required: true },
     price: { type: Number, required: true },
+    location: {
+        city: { type: String },
+        state: { type: String },
+        country: { type: String }
+    },
+    contact: {
+        email: { type: String },
+        phone: { type: String }
+    },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
     status: {
         type: String,
         enum: ['active', 'cancelled', 'expired', 'pending'],

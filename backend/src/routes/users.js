@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import User from '../models/User.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 import Order from '../models/Order.js';
 const router = Router();
 
@@ -64,7 +65,7 @@ router.get('/:userId/stats', async (req, res) => {
 
 
 // Update user profile
-router.put('/:userId', async (req, res) => {
+router.put('/:userId', protect, adminOnly, async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(
             req.params.userId,

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Subscription from '../models/Subscription.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 import User from '../models/User.js';
 
 const router = Router();
@@ -79,7 +80,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update subscription status
-router.put('/:subscriptionId', async (req, res) => {
+router.put('/:subscriptionId', protect, adminOnly, async (req, res) => {
     try {
         const { status, autoRenew } = req.body;
         const updateData = {};
@@ -104,7 +105,7 @@ router.put('/:subscriptionId', async (req, res) => {
 });
 
 // Cancel subscription
-router.put('/:subscriptionId/cancel', async (req, res) => {
+router.put('/:subscriptionId/cancel', protect, adminOnly, async (req, res) => {
     try {
         const subscription = await Subscription.findByIdAndUpdate(
             req.params.subscriptionId,
@@ -126,7 +127,7 @@ router.put('/:subscriptionId/cancel', async (req, res) => {
 });
 
 // Update subscription usage (pickups and weight)
-router.put('/:subscriptionId/usage', async (req, res) => {
+router.put('/:subscriptionId/usage', protect, adminOnly, async (req, res) => {
     try {
         const { pickupsUsed, weightUsed } = req.body;
         const updateData = {};

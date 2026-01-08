@@ -8,6 +8,16 @@ const userSchema = new mongoose.Schema({
     role: { type: String, default: 'user' },
     phone: { type: String },
     address: { type: String },
+    location: {
+        city: { type: String },
+        state: { type: String },
+        country: { type: String }
+    },
+    contact: {
+        email: { type: String },
+        phone: { type: String }
+    },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
 });
 
 // Hash password before saving

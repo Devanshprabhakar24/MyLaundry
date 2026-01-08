@@ -1,3 +1,10 @@
+// Middleware to check if user is admin
+export const adminOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        return next();
+    }
+    return res.status(403).json({ ok: false, message: 'Admin access required' });
+};
 // backend/src/middleware/auth.js  (or backend/src/routes/auth.js if this is where you keep it)
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';

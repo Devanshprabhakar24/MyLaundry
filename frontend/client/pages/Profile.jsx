@@ -42,6 +42,9 @@ export default function Profile() {
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
+    location: user?.location || { city: "", state: "", country: "" },
+    contact: user?.contact || { email: user?.email || "", phone: user?.phone || "" },
+    rating: user?.rating || 0,
     currentPassword: "",
     newPassword: "",
     confirmPassword: ""
@@ -114,9 +117,12 @@ export default function Profile() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: profileData.name,
-                email: profileData.email,
-                phone: profileData.phone
+              name: profileData.name,
+              email: profileData.email,
+              phone: profileData.phone,
+              location: profileData.location,
+              contact: profileData.contact,
+              rating: profileData.rating
             })
         });
         if (response.ok) {
@@ -306,7 +312,7 @@ export default function Profile() {
                       id="email"
                       type="email"
                       value={profileData.email}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value, contact: { ...prev.contact, email: e.target.value } }))}
                       disabled={!isEditing}
                     />
                   </div>
@@ -315,13 +321,53 @@ export default function Profile() {
                     <Input
                       id="phone"
                       value={profileData.phone}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value, contact: { ...prev.contact, phone: e.target.value } }))}
                       disabled={!isEditing}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Account Type</Label>
                     <Input value={user?.role || "User"} disabled className="capitalize" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={profileData.location.city}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, location: { ...prev.location, city: e.target.value } }))}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      value={profileData.location.state}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, location: { ...prev.location, state: e.target.value } }))}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={profileData.location.country}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, location: { ...prev.location, country: e.target.value } }))}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rating">User Rating</Label>
+                    <Input
+                      id="rating"
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      value={profileData.rating}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                      disabled={!isEditing}
+                    />
                   </div>
                 </div>
 
