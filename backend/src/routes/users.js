@@ -5,8 +5,13 @@ import Order from '../models/Order.js';
 const router = Router();
 
 // Get user profile
-router.get('/:userId', async (req, res) => {
+// Protected: User can only view their own profile or Admin
+router.get('/:userId', protect, async (req, res) => {
     try {
+        if (req.params.userId !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
         const user = await User.findById(req.params.userId).select('-password');
         if (user) {
             res.json(user);
@@ -17,10 +22,17 @@ router.get('/:userId', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 // Get user statistics for the current month
-router.get('/:userId/stats', async (req, res) => {
+// Protected: User can only view their own stats or Admin
+router.get('/:userId/stats', protect, async (req, res) => {
     try {
         const { userId } = req.params;
+
+        if (userId !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -65,8 +77,19 @@ router.get('/:userId/stats', async (req, res) => {
 
 
 // Update user profile
-router.put('/:userId', protect, adminOnly, async (req, res) => {
+// Protected: User can update their own profile OR Admin
+// Was: router.put('/:userId', protect, adminOnly, async (req, res) => {
+router.put('/:userId', protect, async (req, res) => {
     try {
+        if (req.params.userId !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        // Prevent non-admins from changing their role
+        if (req.body.role && req.user.role !== 'admin') {
+            delete req.body.role;
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.userId,
             req.body,

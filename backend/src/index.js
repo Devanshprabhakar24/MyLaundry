@@ -37,7 +37,9 @@ const corsOptions = {
         'http://localhost:8080',
         'http://localhost:5173',
         'https://my-laundry-lime.vercel.app',
-        'https://my-laundry-80yyk5tiz-devansh-prabhakars-projects.vercel.app'
+        'https://my-laundry-80yyk5tiz-devansh-prabhakars-projects.vercel.app',
+        'https://my-laundry-22ak2irsr-devansh-prabhakars-projects.vercel.app', // Added based on error log
+        /^https:\/\/my-laundry-.*\.vercel\.app$/ // Allow all Vercel preview/production URLs
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

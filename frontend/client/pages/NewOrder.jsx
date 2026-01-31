@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
 import { API_URL } from '../apiConfig';
+import api from '../utils/api';
 import {
   Calendar,
   Clock,
@@ -175,7 +176,7 @@ export default function NewOrder() {
     }
 
     const finalOrderData = {
-      userId: user._id, // FIX: Use user._id for MongoDB
+      // userId: user._id, // REMOVED: Backend infers userId from token
       pickupDate: orderData.pickupDate,
       pickupTime: orderData.pickupTime,
       address: orderData.pickupAddress,
@@ -195,15 +196,11 @@ export default function NewOrder() {
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(finalOrderData),
-      });
+      // Use api.post instead of fetch. Base URL is handled by api instance.
+      // Token is automatically attached by interceptor.
+      const response = await api.post('/orders', finalOrderData);
 
-      if (response.ok) {
+      if (response.status === 201) {
         alert("Order placed successfully! You'll receive a confirmation email shortly.");
         navigate("/my-orders");
       } else {
@@ -211,7 +208,7 @@ export default function NewOrder() {
       }
     } catch (error) {
       console.error("Order submission error:", error);
-      alert("An error occurred. Please try again.");
+      alert(error.response?.data?.message || "An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -284,8 +281,8 @@ export default function NewOrder() {
               <div className="space-y-8">
                 {services.map((service) => (
                   <Card key={service.id} className={`border-2 ${orderData.services[service.id]?.selected
-                      ? 'border-laundry-blue bg-laundry-light-blue'
-                      : 'border-gray-200'
+                    ? 'border-laundry-blue bg-laundry-light-blue'
+                    : 'border-gray-200'
                     }`}>
                     <CardHeader>
                       <div className="flex items-center gap-4">
