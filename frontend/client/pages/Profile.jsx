@@ -28,7 +28,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-import API_URL from '../apiConfig'; // Add this line
+import { API_URL } from '../apiConfig';
 export default function Profile() {
   const { user, setUser, isAuthenticated } = useAuth();
 
@@ -52,7 +52,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-        setProfileData(prev => ({...prev, ...user}))
+      setProfileData(prev => ({ ...prev, ...user }))
     }
   }, [user]);
 
@@ -113,31 +113,31 @@ export default function Profile() {
   const handleProfileSave = async () => {
     setIsLoading(true);
     try {
-        const response = await fetch(`${API_URL}/api/users/${user.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: profileData.name,
-              email: profileData.email,
-              phone: profileData.phone,
-              location: profileData.location,
-              contact: profileData.contact,
-              rating: profileData.rating
-            })
-        });
-        if (response.ok) {
-            const updatedUser = await response.json();
-            setUser(updatedUser); // Update context
-            alert("Profile updated successfully!");
-            setIsEditing(false);
-        } else {
-            alert("Failed to update profile.");
-        }
+      const response = await fetch(`${API_URL}/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          location: profileData.location,
+          contact: profileData.contact,
+          rating: profileData.rating
+        })
+      });
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser); // Update context
+        alert("Profile updated successfully!");
+        setIsEditing(false);
+      } else {
+        alert("Failed to update profile.");
+      }
     } catch (error) {
-        console.error("Failed to update profile", error);
-        alert("An error occurred while updating the profile.");
+      console.error("Failed to update profile", error);
+      alert("An error occurred while updating the profile.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -181,8 +181,8 @@ export default function Profile() {
   const handleNotificationChange = (key, value) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
   };
-  
-    // Redirect to login if not authenticated
+
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -584,7 +584,7 @@ export default function Profile() {
                       onCheckedChange={(checked) => handleNotificationChange("orderUpdates", checked)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Promotions & Offers</h4>
@@ -595,7 +595,7 @@ export default function Profile() {
                       onCheckedChange={(checked) => handleNotificationChange("promotions", checked)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Newsletter</h4>
@@ -621,7 +621,7 @@ export default function Profile() {
                         onCheckedChange={(checked) => handleNotificationChange("sms", checked)}
                       />
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-laundry-gray" />
@@ -632,7 +632,7 @@ export default function Profile() {
                         onCheckedChange={(checked) => handleNotificationChange("email", checked)}
                       />
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Bell className="h-4 w-4 text-laundry-gray" />
@@ -670,8 +670,8 @@ export default function Profile() {
                       <div className="text-3xl font-bold mb-2">{loyaltyData.points} Points</div>
                       <p className="text-blue-100">{loyaltyData.pointsToNext} points to {loyaltyData.nextTier}</p>
                       <div className="w-full bg-blue-400 rounded-full h-2 mt-3">
-                        <div 
-                          className="bg-white h-2 rounded-full" 
+                        <div
+                          className="bg-white h-2 rounded-full"
                           style={{ width: `${(loyaltyData.points / (loyaltyData.points + loyaltyData.pointsToNext)) * 100}%` }}
                         />
                       </div>

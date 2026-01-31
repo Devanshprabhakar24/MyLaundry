@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
-import API_URL from '../apiConfig';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Package, 
+import { API_URL } from '../apiConfig';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Package,
   CreditCard,
   Plus,
   Minus,
@@ -34,18 +34,18 @@ export default function NewOrder() {
       dryClean: { selected: false, items: {} },
       ironing: { selected: false, items: {} }
     },
-    
+
     // Pickup Details
     pickupDate: "",
     pickupTime: "",
     deliveryPreference: "standard",
-    
+
     // Address & Instructions
     pickupAddress: user?.address || "",
     deliveryAddress: "",
     sameAddress: true,
     specialInstructions: "",
-    
+
     // Payment
     paymentMethod: "card",
   });
@@ -63,7 +63,7 @@ export default function NewOrder() {
       minWeight: 3
     },
     {
-      id: "dryClean", 
+      id: "dryClean",
       name: "Dry Cleaning",
       description: "Expert care for delicate garments",
       icon: <Shirt className="h-6 w-6" />,
@@ -77,7 +77,7 @@ export default function NewOrder() {
     },
     {
       id: "ironing",
-      name: "Ironing Services", 
+      name: "Ironing Services",
       description: "Professional pressing and finishing",
       icon: <Sparkles className="h-6 w-6" />,
       items: [
@@ -90,7 +90,7 @@ export default function NewOrder() {
 
   const timeSlots = [
     "9:00 AM - 11:00 AM",
-    "11:00 AM - 1:00 PM", 
+    "11:00 AM - 1:00 PM",
     "1:00 PM - 3:00 PM",
     "3:00 PM - 5:00 PM",
     "5:00 PM - 7:00 PM"
@@ -132,11 +132,11 @@ export default function NewOrder() {
 
   const calculateTotal = () => {
     let total = 0;
-    
+
     if (orderData.services.washFold.selected) {
       total += orderData.services.washFold.weight * 70;
     }
-    
+
     if (orderData.services.dryClean.selected) {
       const dryCleanService = services.find(s => s.id === "dryClean");
       if (dryCleanService?.items) {
@@ -148,7 +148,7 @@ export default function NewOrder() {
         });
       }
     }
-    
+
     if (orderData.services.ironing.selected) {
       const ironingService = services.find(s => s.id === "ironing");
       if (ironingService?.items) {
@@ -160,7 +160,7 @@ export default function NewOrder() {
         });
       }
     }
-    
+
     return total;
   };
 
@@ -173,7 +173,7 @@ export default function NewOrder() {
       setIsSubmitting(false);
       return;
     }
-    
+
     const finalOrderData = {
       userId: user._id, // FIX: Use user._id for MongoDB
       pickupDate: orderData.pickupDate,
@@ -251,15 +251,13 @@ export default function NewOrder() {
         <div className="flex items-center justify-center mb-8">
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center">
-              <div className={`rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold ${
-                step <= currentStep ? 'bg-laundry-blue text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
+              <div className={`rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold ${step <= currentStep ? 'bg-laundry-blue text-white' : 'bg-gray-200 text-gray-500'
+                }`}>
                 {step < currentStep ? <CheckCircle className="h-5 w-5" /> : step}
               </div>
               {step < 4 && (
-                <div className={`w-16 h-1 mx-2 ${
-                  step < currentStep ? 'bg-laundry-blue' : 'bg-gray-200'
-                }`} />
+                <div className={`w-16 h-1 mx-2 ${step < currentStep ? 'bg-laundry-blue' : 'bg-gray-200'
+                  }`} />
               )}
             </div>
           ))}
@@ -285,11 +283,10 @@ export default function NewOrder() {
             {currentStep === 1 && (
               <div className="space-y-8">
                 {services.map((service) => (
-                  <Card key={service.id} className={`border-2 ${
-                    orderData.services[service.id]?.selected 
-                      ? 'border-laundry-blue bg-laundry-light-blue' 
+                  <Card key={service.id} className={`border-2 ${orderData.services[service.id]?.selected
+                      ? 'border-laundry-blue bg-laundry-light-blue'
                       : 'border-gray-200'
-                  }`}>
+                    }`}>
                     <CardHeader>
                       <div className="flex items-center gap-4">
                         <div className="text-laundry-blue">{service.icon}</div>
@@ -344,8 +341,8 @@ export default function NewOrder() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => updateServiceItem(
-                                    service.id, 
-                                    item.name, 
+                                    service.id,
+                                    item.name,
                                     (orderData.services[service.id].items[item.name] || 0) - 1
                                   )}
                                 >
@@ -359,8 +356,8 @@ export default function NewOrder() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => updateServiceItem(
-                                    service.id, 
-                                    item.name, 
+                                    service.id,
+                                    item.name,
                                     (orderData.services[service.id].items[item.name] || 0) + 1
                                   )}
                                 >
@@ -374,7 +371,7 @@ export default function NewOrder() {
                     </CardContent>
                   </Card>
                 ))}
-                
+
                 <div className="bg-laundry-light-blue p-4 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-laundry-dark">Estimated Total:</span>
@@ -398,7 +395,7 @@ export default function NewOrder() {
                       min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="pickupTime">Pickup Time</Label>
                     <Select onValueChange={(value) => setOrderData(prev => ({ ...prev, pickupTime: value }))}>
@@ -418,7 +415,7 @@ export default function NewOrder() {
 
                 <div className="space-y-2">
                   <Label htmlFor="deliveryPreference">Delivery Preference</Label>
-                  <Select 
+                  <Select
                     value={orderData.deliveryPreference}
                     onValueChange={(value) => setOrderData(prev => ({ ...prev, deliveryPreference: value }))}
                   >
@@ -439,7 +436,7 @@ export default function NewOrder() {
                     <span className="font-semibold text-blue-800">Pickup Information</span>
                   </div>
                   <p className="text-sm text-blue-700">
-                    Our team will arrive during your selected time window. Please have your laundry ready 
+                    Our team will arrive during your selected time window. Please have your laundry ready
                     in a bag or basket. We'll send you a notification 30 minutes before arrival.
                   </p>
                 </div>
@@ -464,8 +461,8 @@ export default function NewOrder() {
                   <Checkbox
                     id="sameAddress"
                     checked={orderData.sameAddress}
-                    onCheckedChange={(checked) => setOrderData(prev => ({ 
-                      ...prev, 
+                    onCheckedChange={(checked) => setOrderData(prev => ({
+                      ...prev,
                       sameAddress: checked,
                       deliveryAddress: checked ? "" : prev.deliveryAddress
                     }))}
@@ -514,8 +511,8 @@ export default function NewOrder() {
                           <span>₹{(orderData.services.washFold.weight * 700).toFixed(2)}</span>
                         </div>
                       )}
-                      
-                      {orderData.services.dryClean.selected && 
+
+                      {orderData.services.dryClean.selected &&
                         Object.entries(orderData.services.dryClean.items).map(([item, qty]) => (
                           qty > 0 && (
                             <div key={item} className="flex justify-between">
@@ -525,8 +522,8 @@ export default function NewOrder() {
                           )
                         ))
                       }
-                      
-                      {orderData.services.ironing.selected && 
+
+                      {orderData.services.ironing.selected &&
                         Object.entries(orderData.services.ironing.items).map(([item, qty]) => (
                           qty > 0 && (
                             <div key={item} className="flex justify-between">
@@ -536,14 +533,14 @@ export default function NewOrder() {
                           )
                         ))
                       }
-                      
+
                       {orderData.deliveryPreference === "express" && (
                         <div className="flex justify-between">
                           <span>Express Delivery</span>
                           <span>₹20.00</span>
                         </div>
                       )}
-                      
+
                       <div className="border-t pt-2">
                         <div className="flex justify-between font-bold text-lg">
                           <span>Total:</span>
@@ -605,7 +602,7 @@ export default function NewOrder() {
               >
                 Previous
               </Button>
-              
+
               {currentStep < 4 ? (
                 <Button
                   onClick={nextStep}

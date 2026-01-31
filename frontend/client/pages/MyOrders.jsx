@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "../context/AuthContext";
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  Download, 
-  Star, 
+import {
+  Search,
+  Filter,
+  Eye,
+  Download,
+  Star,
   Package,
   Calendar,
   IndianRupee,
@@ -22,11 +22,11 @@ import {
   RefreshCw,
   MoreVertical
 } from "lucide-react";
-import API_URL from '../apiConfig'; // Add this line
+import { API_URL } from '../apiConfig';
 export default function MyOrders() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  
+
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -139,15 +139,15 @@ export default function MyOrders() {
   const filteredOrders = orders.filter(order => {
     // FIX: Use order._id for MongoDB
     const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.items.some(item => item.toLowerCase().includes(searchTerm.toLowerCase()));
+      order.items.some(item => item.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    
+
     let matchesDate = true;
     if (dateFilter !== "all") {
       // FIX: Use createdAt for date filtering
       const orderDate = new Date(order.createdAt);
       const now = new Date();
-      
+
       switch (dateFilter) {
         case "week":
           matchesDate = (now.getTime() - orderDate.getTime()) <= 7 * 24 * 60 * 60 * 1000;
@@ -160,7 +160,7 @@ export default function MyOrders() {
           break;
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -238,7 +238,7 @@ export default function MyOrders() {
                   className="pl-10"
                 />
               </div>
-              
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filter by status" />
@@ -289,7 +289,7 @@ export default function MyOrders() {
                       </div>
                     </Badge>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="text-xl font-bold text-laundry-blue">₹{order.total}</div>
                     {order.rating && (
@@ -340,7 +340,7 @@ export default function MyOrders() {
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -350,7 +350,7 @@ export default function MyOrders() {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Reorder
                   </Button>
-                  
+
                   {order.status === 'completed' && (
                     <Button
                       variant="outline"
@@ -362,7 +362,7 @@ export default function MyOrders() {
                       Rate Order
                     </Button>
                   )}
-                  
+
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Receipt

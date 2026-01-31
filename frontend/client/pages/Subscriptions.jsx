@@ -22,7 +22,7 @@ import {
   X,
   Loader2
 } from "lucide-react";
-import API_URL from '@/apiConfig';
+import { API_URL } from '@/apiConfig';
 
 export default function Subscriptions() {
   const navigate = useNavigate();
@@ -183,7 +183,7 @@ export default function Subscriptions() {
       zipCode: ""
     });
   };
-  
+
 
   const handleCloseModal = () => {
     setShowPaymentModal(false);
@@ -232,7 +232,7 @@ export default function Subscriptions() {
     e.preventDefault();
     setIsProcessing(true);
     setPaymentError("");
-      // Add a guard to ensure user and user._id are available
+    // Add a guard to ensure user and user._id are available
     if (!user || !user._id) {
       setPaymentError("Your session has expired. Please log out and log back in.");
       setIsProcessing(false);
@@ -408,7 +408,7 @@ export default function Subscriptions() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl font-bold text-laundry-dark mb-6">Laundry Club Membership</h1>
           <p className="text-xl text-laundry-gray max-w-3xl mx-auto mb-8">
-            Join thousands of satisfied members and save up to 30% on all your laundry needs. 
+            Join thousands of satisfied members and save up to 30% on all your laundry needs.
             More convenience, better prices, premium service.
           </p>
           <Badge className="bg-laundry-blue text-white px-4 py-2 text-lg">
@@ -436,14 +436,14 @@ export default function Subscriptions() {
                     </Badge>
                   </div>
                 )}
-                
+
                 <CardHeader className="text-center">
                   <div className={`${plan.textColor} mx-auto mb-4`}>
                     {plan.icon}
                   </div>
                   <CardTitle className={`text-2xl ${plan.textColor}`}>{plan.name}</CardTitle>
                   <CardDescription className={plan.textColor}>{plan.description}</CardDescription>
-                  
+
                   <div className="pt-4">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-3xl font-bold text-laundry-blue">₹{plan.price}</span>
@@ -479,7 +479,7 @@ export default function Subscriptions() {
                     ))}
                   </ul>
 
-                  <Button 
+                  <Button
                     className={`w-full ${plan.buttonStyle}`}
                     onClick={() => handlePlanSelect(plan)}
                   >
@@ -632,7 +632,7 @@ export default function Subscriptions() {
             Start your free trial today and experience the convenience of membership
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
+            <Button
               className="bg-white text-laundry-blue hover:bg-gray-100 px-8 py-3 text-lg"
               onClick={() => handlePlanSelect(plans[1])} // Default to Family plan
             >
@@ -650,7 +650,7 @@ export default function Subscriptions() {
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
         >
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-100">

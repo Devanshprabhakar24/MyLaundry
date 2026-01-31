@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from "lucide-react";
-import API_URL from '../apiConfig';
+import { API_URL } from '../apiConfig';
 
 export default function SubscriptionManagement() {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export default function SubscriptionManagement() {
 
   const handleCancelSubscription = async () => {
     if (!subscription) return;
-    
+
     setIsCancelling(true);
     try {
       const response = await fetch(`${API_URL}/api/subscriptions/${subscription._id}/cancel`, {
@@ -227,10 +227,10 @@ export default function SubscriptionManagement() {
                       {subscription.weightUsed}kg / {subscription.weightAllowance}
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div 
-                        className="bg-laundry-blue h-2 rounded-full transition-all" 
-                        style={{ 
-                          width: `${calculateUsagePercentage(subscription.weightUsed, subscription.weightAllowance)}%` 
+                      <div
+                        className="bg-laundry-blue h-2 rounded-full transition-all"
+                        style={{
+                          width: `${calculateUsagePercentage(subscription.weightUsed, subscription.weightAllowance)}%`
                         }}
                       />
                     </div>
@@ -245,10 +245,10 @@ export default function SubscriptionManagement() {
                       {subscription.pickupsUsed} / {subscription.pickupsAllowed}
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div 
-                        className="bg-laundry-blue h-2 rounded-full transition-all" 
-                        style={{ 
-                          width: `${(subscription.pickupsUsed / subscription.pickupsAllowed) * 100}%` 
+                      <div
+                        className="bg-laundry-blue h-2 rounded-full transition-all"
+                        style={{
+                          width: `${(subscription.pickupsUsed / subscription.pickupsAllowed) * 100}%`
                         }}
                       />
                     </div>
@@ -327,7 +327,7 @@ export default function SubscriptionManagement() {
                   >
                     Schedule Pickup
                   </Button>
-                  
+
                   {subscription.status === 'active' && (
                     <Button
                       variant="outline"
@@ -358,7 +358,7 @@ export default function SubscriptionManagement() {
                 You don't have an active subscription. Subscribe to a plan to enjoy premium laundry services.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
+                <Button
                   className="btn-primary"
                   onClick={() => navigate('/subscriptions')}
                 >

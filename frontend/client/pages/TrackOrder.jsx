@@ -17,7 +17,7 @@ import {
   AlertCircle,
   RefreshCw
 } from "lucide-react";
-import API_URL from '../apiConfig'; // Add this line
+import { API_URL } from '../apiConfig'; // Add this line
 export default function TrackOrder() {
   const [searchParams] = useSearchParams();
   const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
@@ -34,7 +34,7 @@ export default function TrackOrder() {
     setIsLoading(true);
     setError("");
     setTrackedOrder(null);
-    
+
     try {
       const response = await fetch(`${API_URL}/api/orders/details/${orderId}`);
       const data = await response.json();
@@ -94,7 +94,7 @@ export default function TrackOrder() {
     };
     return iconMap[status] || <Package className={iconClass} />;
   };
-  
+
   const allStatuses = ['pickup_scheduled', 'picked_up', 'washing', 'ready', 'out_for_delivery', 'completed'];
 
   return (
@@ -124,7 +124,7 @@ export default function TrackOrder() {
                 onKeyPress={(e) => e.key === 'Enter' && trackOrder()}
                 className="flex-1"
               />
-              <Button 
+              <Button
                 onClick={trackOrder}
                 disabled={isLoading}
                 className="btn-primary"
@@ -157,7 +157,7 @@ export default function TrackOrder() {
                 </div>
               </CardHeader>
               <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-laundry-gray" />
                     <div>
@@ -197,18 +197,16 @@ export default function TrackOrder() {
                     const stepIndex = allStatuses.indexOf(status);
                     const isCompleted = stepIndex < currentIndex;
                     const isCurrent = stepIndex === currentIndex;
-                    
+
                     return (
                       <div key={status} className="flex items-center gap-4">
-                        <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
-                          isCompleted ? 'bg-green-100' : isCurrent ? 'bg-laundry-blue bg-opacity-20' : 'bg-gray-100'
-                        }`}>
+                        <div className={`rounded-full w-10 h-10 flex items-center justify-center ${isCompleted ? 'bg-green-100' : isCurrent ? 'bg-laundry-blue bg-opacity-20' : 'bg-gray-100'
+                          }`}>
                           {getStatusIcon(status, isCurrent)}
                         </div>
                         <div className="flex-1">
-                          <div className={`font-medium ${
-                            isCompleted ? 'text-green-800' : isCurrent ? 'text-laundry-blue' : 'text-gray-500'
-                          }`}>
+                          <div className={`font-medium ${isCompleted ? 'text-green-800' : isCurrent ? 'text-laundry-blue' : 'text-gray-500'
+                            }`}>
                             {getStatusText(status)}
                           </div>
                         </div>
