@@ -15,7 +15,12 @@ const router = Router();
 
 // Login
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    // Normalize email: Remove whitespace and convert to lowercase
+    if (email) email = email.trim().toLowerCase();
+    if (password) password = password.trim();
+
     try {
         const user = await User.findOne({ email });
 
