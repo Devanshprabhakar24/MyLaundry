@@ -31,16 +31,22 @@ if (!fs.existsSync(uploadsDir)) {
     console.log(`Created directory: ${uploadsDir}`);
 }
 
-// --- CORS Configuration ---
+// --- CORS Configuration (FIXED) ---
 const corsOptions = {
     origin: [
         'http://localhost:8080',
         'http://localhost:5173',
-        'https://my-laundry-lime.vercel.app'
+        'https://my-laundry-lime.vercel.app',
+        'https://my-laundry-80yyk5tiz-devansh-prabhakars-projects.vercel.app'
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+
 
 // --- Middleware ---
 app.use(express.json());
