@@ -1,10 +1,10 @@
 import axios from "axios";
 
-// --- FIXED: Force connection to Render Backend ---
-// We append '/api' because your backend routes are configured as /api/...
+// --- FIXED: Hardcoded to your Render Backend ---
+// We removed the 'process.env' check so it works on your local machine too.
 export const API_URL = "https://mylaundry-backend-hi3w.onrender.com/api";
 
-// The backend's root URL (without /api) for serving static images
+// The backend's root URL (without /api) for serving images
 export const BACKEND_URL = "https://mylaundry-backend-hi3w.onrender.com";
 
 const api = axios.create({
