@@ -23,6 +23,8 @@ import {
   MoreVertical
 } from "lucide-react";
 import { API_URL } from '../apiConfig';
+import api from "../utils/api";
+
 export default function MyOrders() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -39,10 +41,8 @@ export default function MyOrders() {
       const fetchOrders = async () => {
         setIsLoading(true);
         try {
-          // FIX: Use user._id for MongoDB
-          const response = await fetch(`${API_URL}/api/orders/${user._id}`);
-          const data = await response.json();
-          setOrders(data);
+          const response = await api.get('/orders/mine');
+          setOrders(response.data);
         } catch (error) {
           console.error("Failed to fetch orders:", error);
         } finally {

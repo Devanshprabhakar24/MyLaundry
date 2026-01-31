@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
-import { 
+import {
   Package,
   Clock,
   CheckCircle,
@@ -22,34 +22,34 @@ import {
 } from "lucide-react";
 
 const quickActions = [
-    {
-      title: "New Order",
-      description: "Schedule a pickup",
-      icon: <Plus className="h-6 w-6" />,
-      link: "/new-order",
-      color: "bg-laundry-blue"
-    },
-    {
-      title: "Track Order",
-      description: "Check order status",
-      icon: <Eye className="h-6 w-6" />,
-      link: "/track-order",
-      color: "bg-green-600"
-    },
-    {
-      title: "My Orders",
-      description: "View order history",
-      icon: <Package className="h-6 w-6" />,
-      link: "/my-orders",
-      color: "bg-purple-600"
-    },
-    {
-      title: "Subscription",
-      description: "Manage subscription",
-      icon: <Crown className="h-6 w-6" />,
-      link: "/subscription-management",
-      color: "bg-orange-600"
-    }
+  {
+    title: "New Order",
+    description: "Schedule a pickup",
+    icon: <Plus className="h-6 w-6" />,
+    link: "/new-order",
+    color: "bg-laundry-blue"
+  },
+  {
+    title: "Track Order",
+    description: "Check order status",
+    icon: <Eye className="h-6 w-6" />,
+    link: "/track-order",
+    color: "bg-green-600"
+  },
+  {
+    title: "My Orders",
+    description: "View order history",
+    icon: <Package className="h-6 w-6" />,
+    link: "/my-orders",
+    color: "bg-purple-600"
+  },
+  {
+    title: "Subscription",
+    description: "Manage subscription",
+    icon: <Crown className="h-6 w-6" />,
+    link: "/subscription-management",
+    color: "bg-orange-600"
+  }
 ];
 
 export default function Dashboard() {
@@ -66,7 +66,7 @@ export default function Dashboard() {
         setIsLoading(true);
         try {
           const [ordersRes, statsRes] = await Promise.all([
-            api.get(`/orders/${user._id}`),
+            api.get('/orders/mine'),
             api.get(`/users/${user._id}/stats`)
           ]);
 
@@ -120,7 +120,7 @@ export default function Dashboard() {
       </div>
     );
   }
-  
+
   const getStatusColor = (status) => {
     // ... (getStatusColor function remains the same)
   };
@@ -158,10 +158,10 @@ export default function Dashboard() {
             {activeOrder && (
               <Card>
                 <CardHeader>
-                    {/* ... Active Order Header ... */}
+                  {/* ... Active Order Header ... */}
                 </CardHeader>
                 <CardContent>
-                    {/* ... Active Order Content ... */}
+                  {/* ... Active Order Content ... */}
                 </CardContent>
               </Card>
             )}
@@ -206,12 +206,12 @@ export default function Dashboard() {
 
           <div className="space-y-6">
             <Card>
-                <CardHeader>
-                    {/* ... Account Info Header ... */}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {/* ... Account Info Content ... */}
-                </CardContent>
+              <CardHeader>
+                {/* ... Account Info Header ... */}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* ... Account Info Content ... */}
+              </CardContent>
             </Card>
 
             <Card>
