@@ -70,9 +70,23 @@ router.post('/', async (req, res) => {
 
         await logActivity('new_order', `New order #${newOrder._id.toString().slice(-6)} placed.`, newOrder.userId, newOrder._id);
 
-        // Send confirmation email
-        // We already have the user in req.user, no need to query again unless we need fresh data
-        sendOrderConfirmationEmail(req.user.email, newOrder);
+        // Send confirmation email (non-blocking)
+        const orderWithUserName = {
+            ...newOrder.toObject(),
+            userName: req.user.name
+        };
+
+        sendOrderConfirmationEmail(req.user.email, orderWithUserName)
+            .then(result => {
+                if (result.ok) {
+                    console.log(`[orders] Order confirmation email sent to ${req.user.email}`);
+                } else {
+                    console.warn(`[orders] Failed to send order confirmation email: ${result.error}`);
+                }
+            })
+            .catch(err => {
+                console.error(`[orders] Error sending order confirmation email:`, err);
+            });
 
         res.status(201).json(newOrder);
     } catch (error) {

@@ -34,9 +34,24 @@ router.put('/orders/:orderId', async (req, res) => {
             updatedOrder._id
         );
 
-        // Send status update email
-        if (updatedOrder.userId) {
-            sendOrderStatusUpdateEmail(updatedOrder.userId.email, updatedOrder);
+        // Send status update email (non-blocking)
+        if (updatedOrder.userId && updatedOrder.userId.email) {
+            const orderWithUserName = {
+                ...updatedOrder.toObject(),
+                userName: updatedOrder.userId.name
+            };
+
+            sendOrderStatusUpdateEmail(updatedOrder.userId.email, orderWithUserName)
+                .then(result => {
+                    if (result.ok) {
+                        console.log(`[admin] Status update email sent to ${updatedOrder.userId.email} for order ${updatedOrder._id}`);
+                    } else {
+                        console.warn(`[admin] Failed to send status update email: ${result.error}`);
+                    }
+                })
+                .catch(err => {
+                    console.error(`[admin] Error sending status update email:`, err);
+                });
         }
 
         res.json(updatedOrder);
