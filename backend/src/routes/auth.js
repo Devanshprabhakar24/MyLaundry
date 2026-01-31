@@ -1,8 +1,15 @@
 import { Router } from 'express';
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { logActivity } from './activity.js'; // ensure this file exists
 import { sendWelcomeEmail } from '../services/emailService.js';
+
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d',
+    });
+};
 
 const router = Router();
 
@@ -14,7 +21,11 @@ router.post('/login', async (req, res) => {
         if (user && (await bcrypt.compare(password, user.password))) {
             const userObject = user.toObject();
             delete userObject.password;
-            return res.json({ success: true, user: userObject });
+            return res.json({
+                success: true,
+                user: userObject,
+                token: generateToken(user._id)
+            });
         } else {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -61,7 +72,11 @@ router.post('/signup', async (req, res) => {
 
         const userObject = newUser.toObject();
         delete userObject.password;
-        return res.status(201).json({ success: true, user: userObject });
+        return res.status(201).json({
+            success: true,
+            user: userObject,
+            token: generateToken(newUser._id)
+        });
     } catch (error) {
         console.error('[auth.signup] error:', error);
         return res.status(500).json({ success: false, message: 'Server error' });

@@ -25,6 +25,9 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         setIsAuthenticated(true);
         localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('mylaundry_token', data.token);
+        }
         return { success: true, user: data.user };
       } else {
         return { success: false, message: data.message || 'Invalid credentials' };
@@ -44,6 +47,9 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         setIsAuthenticated(true);
         localStorage.setItem('mylaundry_user', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('mylaundry_token', data.token);
+        }
         return { success: true, user: data.user };
       } else {
         return { success: false, message: data.message || 'Signup failed.' };
@@ -58,6 +64,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('mylaundry_user');
+    localStorage.removeItem('mylaundry_token');
   };
 
   const value = {
