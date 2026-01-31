@@ -35,6 +35,7 @@ if (!fs.existsSync(uploadsDir)) {
 const corsOptions = {
     origin: [
         'http://localhost:8080',
+        'http://localhost:5173',
         'https://my-laundry-lime.vercel.app'
     ],
     credentials: true,
