@@ -36,6 +36,7 @@ const corsOptions = {
     origin: [
         'http://localhost:8080',
         'http://localhost:5173',
+        'http://localhost:3000', // Added standard React port
         'https://my-laundry-lime.vercel.app',
         'https://my-laundry-80yyk5tiz-devansh-prabhakars-projects.vercel.app',
         'https://my-laundry-22ak2irsr-devansh-prabhakars-projects.vercel.app', // Added based on error log
