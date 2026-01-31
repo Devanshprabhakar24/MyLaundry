@@ -18,7 +18,19 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (user && (await bcrypt.compare(password, user.password))) {
+
+        if (!user) {
+            console.log(`❌ Login Failed: User not found [${email}]`);
+            return res.status(401).json({ success: false, message: 'User not found' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            console.log(`❌ Login Failed: Password mismatch [${email}]`);
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        if (user && isMatch) {
             const userObject = user.toObject();
             delete userObject.password;
             return res.json({

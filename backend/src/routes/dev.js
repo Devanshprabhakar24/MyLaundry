@@ -39,23 +39,22 @@ router.post('/seed', async (req, res) => {
     const results = [];
 
     for (const userData of usersToCreate) {
-      let user = await User.findOne({ email: userData.email });
+      // Manually hash payload
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-      if (user) {
-        // FORCE RESET PASSWORD
-        // We manually hash because we might not trigger pre-save if we modified it differently, 
-        // but setting the property and verify is safer.
-        // Actually, let's just set the plain text and .save(), the pre-save hook handles hashing if modified.
-        user.password = userData.password;
-        user.name = userData.name;
-        user.role = userData.role;
-        await user.save();
-        results.push(`♻️ Updated/Reset: ${userData.email}`);
-      } else {
-        user = new User(userData);
-        await user.save();
-        results.push(`✅ Created: ${userData.email}`);
-      }
+      const user = await User.findOneAndUpdate(
+        { email: userData.email },
+        {
+          $set: {
+            name: userData.name,
+            password: hashedPassword,
+            role: userData.role
+          }
+        },
+        { new: true, upsert: true } // Create if not exists
+      );
+      results.push(`✅ Processed: ${userData.email}`);
     }
     res.json({ success: true, message: "Seeding complete", results });
   } catch (error) {
