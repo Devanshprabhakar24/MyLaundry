@@ -1,0 +1,6 @@
+@echo off
+echo Stopping all Node processes...
+taskkill /F /IM node.exe /IM nodemon.exe 2>nul
+timeout /t 1 /nobreak >nul
+echo Starting backend server...
+npm run dev
