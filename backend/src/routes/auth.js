@@ -54,17 +54,18 @@ router.post('/login', async (req, res) => {
 
 // Signup
 router.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+
+    // Normalize email
+    if (email) email = email.trim().toLowerCase();
+
     try {
         if (await User.findOne({ email })) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        // 🔐 Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new User({ name, email, password: hashedPassword });
+        // Create user with plain password - pre-save hook will hash it automatically
+        const newUser = new User({ name, email, password });
         await newUser.save();
 
         // Log activity

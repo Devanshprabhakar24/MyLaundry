@@ -84,25 +84,6 @@ export default function Login() {
                 <strong>Demo Credentials:</strong><br />
                 User: user@example.com | Admin: admin@mylaundry.com<br />
                 Password: 123456789
-                <div className="mt-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (confirm("This will create the demo accounts if they don't exist. Continue?")) {
-                        try {
-                          const res = await fetch("https://mylaundry-backend-hi3w.onrender.com/dev/seed", { method: "POST" });
-                          const data = await res.json();
-                          alert(data.message + "\n" + (data.results || []).join("\n"));
-                        } catch (e) {
-                          alert("Failed to seed: " + e.message);
-                        }
-                      }
-                    }}
-                    className="underline text-blue-800 hover:text-blue-900"
-                  >
-                    Restore Demo Data
-                  </button>
-                </div>
               </div>
 
               {/* Email Field */}
