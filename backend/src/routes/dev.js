@@ -19,7 +19,7 @@ router.post('/seed', async (req, res) => {
       {
         name: "Demo User",
         email: "user@example.com",
-        password: "123456789", // Will be hashed by pre-save hook
+        password: "123456789",
         role: "user"
       },
       {
@@ -27,22 +27,36 @@ router.post('/seed', async (req, res) => {
         email: "admin@mylaundry.com",
         password: "123456789",
         role: "admin"
+      },
+      {
+        name: "Devansh Prabhakar",
+        email: "dev24prabhakar@gmail.com",
+        password: "123456789",
+        role: "user"
       }
     ];
 
     const results = [];
 
     for (const userData of usersToCreate) {
-      const exists = await User.findOne({ email: userData.email });
-      if (!exists) {
-        const user = new User(userData);
+      let user = await User.findOne({ email: userData.email });
+
+      if (user) {
+        // FORCE RESET PASSWORD
+        // We manually hash because we might not trigger pre-save if we modified it differently, 
+        // but setting the property and verify is safer.
+        // Actually, let's just set the plain text and .save(), the pre-save hook handles hashing if modified.
+        user.password = userData.password;
+        user.name = userData.name;
+        user.role = userData.role;
         await user.save();
-        results.push(`Created ${userData.email}`);
+        results.push(`♻️ Updated/Reset: ${userData.email}`);
       } else {
-        results.push(`Skipped ${userData.email} (already exists)`);
+        user = new User(userData);
+        await user.save();
+        results.push(`✅ Created: ${userData.email}`);
       }
     }
-
     res.json({ success: true, message: "Seeding complete", results });
   } catch (error) {
     console.error("Seeding error:", error);
