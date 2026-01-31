@@ -71,6 +71,8 @@ app.get("/", (req, res) => {
 });
 
 // --- MongoDB Connection Setup (Production Level) ---
+let serverStarted = false;
+
 async function connectWithRetry() {
     try {
         await mongoose.connect(process.env.MONGODB_URI, {
@@ -80,9 +82,14 @@ async function connectWithRetry() {
             socketTimeoutMS: 45000, // 45 seconds
         });
         console.log("✅ Connected to MongoDB");
-        app.listen(port, () => {
-            console.log(`🚀 MyLaundry backend server running on port ${port}`);
-        });
+
+        // Only start server once
+        if (!serverStarted) {
+            app.listen(port, () => {
+                console.log(`🚀 MyLaundry backend server running on port ${port}`);
+            });
+            serverStarted = true;
+        }
     } catch (err) {
         console.error("❌ MongoDB connection error:", err.message);
         // Retry after 5 seconds
