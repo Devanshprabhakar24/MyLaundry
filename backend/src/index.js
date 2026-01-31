@@ -14,6 +14,7 @@ import adminRoutes from "./routes/admin.js";
 import garmentRoutes from "./routes/garments.js";
 import subscriptionRoutes from "./routes/subscriptions.js";
 import activityRoutes from './routes/activity.js';
+import { verifyTransporter } from './services/emailService.js';
 
 
 const app = express();
@@ -82,6 +83,9 @@ async function connectWithRetry() {
             socketTimeoutMS: 45000, // 45 seconds
         });
         console.log("✅ Connected to MongoDB");
+
+        // Verify email service
+        await verifyTransporter();
 
         // Only start server once
         if (!serverStarted) {
