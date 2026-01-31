@@ -1,13 +1,11 @@
 import axios from "axios";
 
-// Determine the base URL based on the environment
-export const API_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://mylaundry-backend-hi3w.onrender.com/api"
-    : "http://localhost:3001/api";
+// --- FIXED: Force connection to Render Backend ---
+// We append '/api' because your backend routes are configured as /api/...
+export const API_URL = "https://mylaundry-backend-hi3w.onrender.com/api";
 
-// The backend's root URL (without /api) for serving images
-export const BACKEND_URL = API_URL.replace("/api", "");
+// The backend's root URL (without /api) for serving static images
+export const BACKEND_URL = "https://mylaundry-backend-hi3w.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
