@@ -7,7 +7,24 @@ import { protect } from '../middleware/auth.js'; // Import protect middleware
 
 const router = Router();
 
-// Apply protect middleware to all order routes
+// Public route for order tracking (no authentication required)
+router.get('/public/track/:orderId', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId)
+            .populate('userId', 'name email')
+            .select('_id status garments createdAt estimatedDelivery pickupTime userId');
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Apply protect middleware to all other order routes
 router.use(protect);
 
 // Get all orders for the logged-in user

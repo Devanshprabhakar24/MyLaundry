@@ -36,7 +36,7 @@ export default function TrackOrder() {
     setTrackedOrder(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/orders/details/${orderId}`);
+      const response = await fetch(`${API_URL}/orders/public/track/${orderId}`);
       const data = await response.json();
 
       if (response.ok) {
