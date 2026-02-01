@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import { logActivity } from './activity.js'; // <-- ADD THIS IMPORT
-import { sendOrderStatusUpdateEmail } from '../services/emailService.js'; // <-- ADD THIS
+import { sendOrderStatusUpdateEmail, sendEmail, verifyTransporter } from '../services/emailService.js'; // <-- ADD THIS
 
 const router = Router();
 
@@ -113,6 +113,78 @@ router.get('/customers', async (req, res) => {
     } catch (error) {
         console.error("Error fetching customers:", error);
         res.status(500).json({ message: 'Server error while fetching customers' });
+    }
+});
+
+// Test email endpoint - useful for verifying email works in production
+router.post('/test-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email address is required' });
+        }
+
+        // First verify the transporter
+        const isVerified = await verifyTransporter();
+
+        if (!isVerified) {
+            return res.status(500).json({
+                success: false,
+                message: 'Email transporter verification failed. Check server logs and environment variables.',
+                envCheck: {
+                    EMAIL_HOST: process.env.EMAIL_HOST ? 'SET' : 'NOT SET',
+                    EMAIL_PORT: process.env.EMAIL_PORT ? 'SET' : 'NOT SET',
+                    EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+                    EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET',
+                }
+            });
+        }
+
+        // Send test email
+        const result = await sendEmail(
+            email,
+            'MyLaundry - Email Test',
+            '<h1>Email Test Successful!</h1><p>If you received this email, your email service is working correctly.</p><p>Sent from MyLaundry backend.</p>',
+            'Email Test Successful! If you received this email, your email service is working correctly.'
+        );
+
+        if (result.ok) {
+            res.json({
+                success: true,
+                message: `Test email sent to ${email}`,
+                messageId: result.info?.messageId
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send test email',
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('[admin/test-email] Error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+});
+
+// Email status check endpoint
+router.get('/email-status', async (req, res) => {
+    try {
+        const isVerified = await verifyTransporter();
+        res.json({
+            success: true,
+            emailServiceActive: isVerified,
+            config: {
+                EMAIL_HOST: process.env.EMAIL_HOST ? 'configured' : 'missing',
+                EMAIL_PORT: process.env.EMAIL_PORT ? 'configured' : 'missing',
+                EMAIL_USER: process.env.EMAIL_USER ? 'configured' : 'missing',
+                EMAIL_PASS: process.env.EMAIL_PASS ? 'configured' : 'missing',
+                EMAIL_FROM: process.env.EMAIL_FROM ? 'configured' : 'missing',
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
