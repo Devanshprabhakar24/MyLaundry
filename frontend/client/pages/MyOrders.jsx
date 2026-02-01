@@ -165,11 +165,40 @@ export default function MyOrders() {
   });
 
   const handleReorder = (orderId) => {
-    alert(`Reordering ₹{orderId} - This would redirect to new order page with pre-filled items`);
+    // Navigate to new order page - could pre-fill items in future
+    navigate('/new-order');
   };
 
   const handleRateOrder = (orderId) => {
-    alert(`Rating order ₹{orderId} - This would open a rating modal`);
+    alert(`Rating order ${orderId} - This would open a rating modal`);
+  };
+
+  const handleDownloadReceipt = (order) => {
+    // Generate a simple text receipt
+    const receiptContent = `
+=== MyLaundry Receipt ===
+Order ID: #${order._id}
+Date: ${new Date(order.createdAt).toLocaleDateString()}
+
+Items:
+${order.items.map(item => `  - ${item}`).join('\n')}
+
+Pickup: ${new Date(order.pickupDate).toLocaleDateString()}
+Delivery: ${new Date(order.estimatedDelivery).toLocaleDateString()}
+
+Total: ₹${order.total}
+Status: ${getStatusText(order.status)}
+
+Thank you for choosing MyLaundry!
+    `.trim();
+    
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt_${order._id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const stats = {
@@ -363,7 +392,11 @@ export default function MyOrders() {
                     </Button>
                   )}
 
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDownloadReceipt(order)}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Receipt
                   </Button>

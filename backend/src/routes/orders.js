@@ -19,8 +19,7 @@ router.get('/public/track/:orderId', async (req, res) => {
         }
 
         const order = await Order.findById(orderId)
-            .populate('userId', 'name email')
-            .select('_id status garments createdAt estimatedDelivery pickupTime userId');
+            .populate('userId', 'name email');
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
