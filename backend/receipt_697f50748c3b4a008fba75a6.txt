@@ -1,0 +1,14 @@
+=== MyLaundry Receipt ===
+Order ID: #697f50748c3b4a008fba75a6
+Date: 01/02/2026
+
+Items:
+  - 1kg Wash & Fold
+
+Pickup: 12/02/2026
+Delivery: 13/02/2026
+
+Total: ₹70
+Status: Pickup Scheduled
+
+Thank you for choosing MyLaundry!

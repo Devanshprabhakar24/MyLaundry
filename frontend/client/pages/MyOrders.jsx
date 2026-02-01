@@ -137,9 +137,9 @@ export default function MyOrders() {
   };
 
   const filteredOrders = orders.filter(order => {
-    // FIX: Use order._id for MongoDB
+    // FIX: Use order._id for MongoDB and handle empty items
     const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.items.some(item => item.toLowerCase().includes(searchTerm.toLowerCase()));
+      (order.items && order.items.some(item => item.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
 
     let matchesDate = true;
@@ -308,7 +308,7 @@ Thank you for choosing MyLaundry!
                     <div>
                       <h3 className="text-lg font-semibold text-laundry-dark">#{order._id}</h3>
                       <p className="text-sm text-laundry-gray">
-                        {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} items
+                        {new Date(order.createdAt).toLocaleDateString()} • {order.items?.length || 0} items
                       </p>
                     </div>
                     <Badge className={getStatusColor(order.status)}>
@@ -333,11 +333,15 @@ Thank you for choosing MyLaundry!
                 <div className="mb-4">
                   <div className="text-sm text-laundry-gray mb-2">Items:</div>
                   <div className="flex flex-wrap gap-2">
-                    {order.items.map((item, idx) => (
-                      <Badge key={idx} variant="secondary" className="bg-gray-100 text-gray-700">
-                        {item}
-                      </Badge>
-                    ))}
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="bg-gray-100 text-gray-700">
+                          {item}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-sm">No items listed</span>
+                    )}
                   </div>
                 </div>
 
