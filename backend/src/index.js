@@ -29,13 +29,14 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
     console.log(`Created directory: ${uploadsDir}`);
 }
+//upper block code fro error handling
 
 // --- CORS Configuration (FIXED) ---
 const corsOptions = {
     origin: [
         'http://localhost:8080',
         'http://localhost:5173',
-        'http://localhost:3000', // Added standard React port
+        'http://localhost:3000', 
         'https://my-laundry-lime.vercel.app',
         'https://my-laundry-80yyk5tiz-devansh-prabhakars-projects.vercel.app',
         'https://my-laundry-22ak2irsr-devansh-prabhakars-projects.vercel.app', // Added based on error log

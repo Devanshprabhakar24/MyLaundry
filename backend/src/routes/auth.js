@@ -17,7 +17,7 @@ const router = Router();
 router.post('/login', async (req, res) => {
     let { email, password } = req.body;
 
-    // Normalize email: Remove whitespace and convert to lowercase
+    //Removing whitespace and converting to lowercase
     if (email) email = email.trim().toLowerCase();
     if (password) password = password.trim();
 
@@ -56,7 +56,7 @@ router.post('/login', async (req, res) => {
 router.post('/signup', async (req, res) => {
     let { name, email, password } = req.body;
 
-    // Normalize email
+    
     if (email) email = email.trim().toLowerCase();
 
     try {
