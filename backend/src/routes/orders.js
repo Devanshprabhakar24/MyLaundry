@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import { logActivity } from './activity.js';
 import User from '../models/User.js';
@@ -10,7 +11,14 @@ const router = Router();
 // Public route for order tracking (no authentication required)
 router.get('/public/track/:orderId', async (req, res) => {
     try {
-        const order = await Order.findById(req.params.orderId)
+        const { orderId } = req.params;
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({ message: 'Invalid order ID format' });
+        }
+
+        const order = await Order.findById(orderId)
             .populate('userId', 'name email')
             .select('_id status garments createdAt estimatedDelivery pickupTime userId');
 
@@ -20,6 +28,7 @@ router.get('/public/track/:orderId', async (req, res) => {
 
         res.json(order);
     } catch (error) {
+        console.error('Track order error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
